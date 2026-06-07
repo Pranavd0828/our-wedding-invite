@@ -224,6 +224,12 @@ body.night-mode .paper-overlay {
   opacity: 0;
 }
 
+@media (max-width: 767px) {
+  .fallback-image.hidden {
+    display: block !important;
+  }
+}
+
 /* ==========================================================================
    TYPOGRAPHY
    ========================================================================== */

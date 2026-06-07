@@ -25,12 +25,19 @@ class WebGLHandler {
     this.targetParallax = { x: 0, y: 0 };
     this.currentParallax = { x: 0, y: 0 };
     this.hasGyro = false;
+    this.useStaticMobileFallback = window.matchMedia('(max-width: 767px)').matches;
     
     // Initialization
     this.init();
   }
 
   async init() {
+    if (this.useStaticMobileFallback) {
+      this.canvas.classList.add('hidden');
+      this.displayFallback();
+      return;
+    }
+
     this.gl = this.canvas.getContext('webgl', { alpha: true, antialias: true, premultipliedAlpha: false });
     if (!this.gl) {
       console.warn("WebGL not supported, falling back to DOM image layers.");
@@ -81,19 +88,24 @@ class WebGLHandler {
       // Basic hover/scroll translation on fallback images as progressive enhancement
       window.addEventListener('scroll', () => {
         const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+        const shouldScaleFallback = !this.useStaticMobileFallback;
         
         // Scale Image 4
         if (scrollPercent <= 0.35) {
-          const scale = 1.0 + scrollPercent * 0.05;
-          img4.style.transform = `scale(${scale})`;
+          if (shouldScaleFallback) {
+            const scale = 1.0 + scrollPercent * 0.05;
+            img4.style.transform = `scale(${scale})`;
+          }
           img4.classList.remove('hidden');
           img3.classList.add('hidden');
         } else {
           // Cross-fade window (strict 150px around 35%)
           img4.classList.add('hidden');
           img3.classList.remove('hidden');
-          const scale = 1.0 + (scrollPercent - 0.35) * 0.05;
-          img3.style.transform = `scale(${scale})`;
+          if (shouldScaleFallback) {
+            const scale = 1.0 + (scrollPercent - 0.35) * 0.05;
+            img3.style.transform = `scale(${scale})`;
+          }
         }
       });
     }
