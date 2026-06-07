@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Landscape of Us — Pranav & Prajakta</title>
+  <meta name="description" content="You are warmly invited to join Pranav & Prajakta in celebrating their wedding at Sorina Hillside Resort this December. Explore the watercolor story and RSVP.">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="The Landscape of Us — Pranav & Prajakta">
+  <meta property="og:description" content="You are warmly invited to join Pranav & Prajakta in celebrating their wedding at Sorina Hillside Resort this December.">
+  <meta property="og:image" content="./assets/image-4.jpg">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+  
+  <!-- Favicon link (will be dynamically painted by app.js) -->
+  <link id="favicon" rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'></svg>">
+  
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+  <!-- Fine-Grain Paper Texture Overlay -->
+  <div class="paper-overlay" aria-hidden="true"></div>
+
+  <!-- WebGL Render Canvas (Midground Image rendering) -->
+  <canvas id="webgl-canvas" class="webgl-viewport phase-1-active" aria-hidden="true"></canvas>
+
+  <!-- DOM Fallback Images (Hidden when WebGL is initialized successfully) -->
+  <div id="fallback-images-container" class="fallback-container phase-1-active">
+    <img id="fallback-img-4" src="./assets/image-4.jpg" class="fallback-image" alt="Pranav & Prajakta watercolor landscape with sunglasses" />
+    <img id="fallback-img-3" src="./assets/image-3.jpg" class="fallback-image hidden" alt="Pranav & Prajakta watercolor landscape warm smile" />
+  </div>
+
+  <!-- Custom Circular Cursor Directions Badge -->
+  <div id="custom-cursor-badge" class="cursor-badge" aria-hidden="true">
+    <div class="badge-inner">
+      <svg viewBox="0 0 100 100" width="100" height="100">
+        <path id="circlePath" d="M 50, 50 m -35, 0 a 35,35 0 1,1 70,0 a 35,35 0 1,1 -70,0" fill="transparent" />
+        <text font-family="'Outfit', sans-serif" font-size="7.5" font-weight="600" fill="var(--leaf-olive)">
+          <textPath href="#circlePath" startOffset="0%">OPEN DIRECTIONS MAP &bull; OPEN DIRECTIONS MAP &bull;</textPath>
+        </text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Generative Audio Control Widget -->
+  <button id="audio-control-widget" class="audio-widget paused" aria-label="Play ambient soundtrack" title="Play ambient soundtrack">
+    <div class="widget-waves">
+      <span class="wave-bar"></span>
+      <span class="wave-bar"></span>
+      <span class="wave-bar"></span>
+      <span class="wave-bar"></span>
+    </div>
+    <span class="widget-label">SOUND: OFF</span>
+  </button>
+
+  <!-- Primary Foreground Content Container -->
+  <main id="app-scroller" class="scroller-container">
+    
+    <!-- Section 1: Welcome Screen -->
+    <section id="welcome-section" class="scroll-section">
+      <div class="section-inner grid-welcome">
+        <div class="welcome-text-col">
+          <span class="label-pre">WEDDING INVITATION</span>
+          <h1 class="display-title">Pranav<br><span class="ampersand">&amp;</span> Prajakta</h1>
+          <p class="intro-description">
+            A celebration of two paths winding together through rolling meadows, soft skies, and warm smiles. We invite you to be a part of our story.
+          </p>
+          
+          <div class="elegant-details">
+            <div class="detail-block">
+              <span class="detail-label">DATE</span>
+              <span class="detail-value">DEC 11 - 12, 2026</span>
+            </div>
+            <div class="detail-divider"></div>
+            <div class="detail-block">
+              <span class="detail-label">LOCATION</span>
+              <span class="detail-value">KHADAKWASLA, PUNE</span>
+            </div>
+          </div>
+
+          <div class="scroll-hint">
+            <span class="hint-text">SCROLL TO UNFOLD</span>
+            <svg class="hint-arrow" viewBox="0 0 24 24" width="16" height="16">
+              <path d="M12 5v14m-7-7 7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+        
+        <!-- Placeholder empty column on right for WebGL off-center column placement on desktop -->
+        <div class="welcome-empty-col" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <!-- Section 2: Celebration Details -->
+    <section id="details-section" class="scroll-section">
+      <div class="section-inner layout-details">
+        
+        <div class="details-heading">
+          <span class="label-pre">THE CELEBRATION</span>
+          <h2 class="display-title-sm">Our Festivities</h2>
+          <p class="details-subtitle">Join us as we write these days into our canvas.</p>
+        </div>
+
+        <div class="editorial-timeline">
+          <!-- Event 1: Sangeet -->
+          <article class="timeline-event" id="event-sangeet">
+            <header class="event-header">
+              <span class="event-date">DECEMBER 11</span>
+              <h3 class="event-title">The Sangeet Celebration</h3>
+            </header>
+            <div class="event-body">
+              <p class="event-time">18:00 HOURS ONWARDS</p>
+              <p class="event-desc">An evening of rhythmic colors, acoustic melodies, and shared laughter, welcoming our family and friends.</p>
+            </div>
+          </article>
+
+          <!-- Separator -->
+          <div class="timeline-separator">
+            <svg viewBox="0 0 100 10" class="svg-accent-line" aria-hidden="true">
+              <line x1="0" y1="5" x2="100" y2="5" stroke="var(--leaf-olive)" stroke-width="0.5" stroke-dasharray="2,4" opacity="0.4"/>
+              <circle cx="50" cy="5" r="2" fill="var(--leaf-olive)" opacity="0.6"/>
+            </svg>
+          </div>
+
+          <!-- Event 2: Wedding -->
+          <article class="timeline-event" id="event-wedding">
+            <header class="event-header">
+              <span class="event-date">DECEMBER 12</span>
+              <h3 class="event-title">The Wedding Ceremony</h3>
+            </header>
+            <div class="event-body">
+              <p class="event-time">AUSPICIOUS MUHURTAM COORDINATES</p>
+              <p class="event-desc">The sacred vows that bond our souls together, set against the peaceful whispering hills of Gorhe.</p>
+            </div>
+          </article>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Section 3: The Spatial Map & Venue -->
+    <section id="map-section" class="scroll-section" style="position: relative;">
+      
+      <!-- Full Bleed Right Column Map (To match images) -->
+      <div class="rsvp-full-bleed-image map-canvas-container">
+        <div id="google-map" style="width: 100%; height: 100%; border-radius: inherit;"></div>
+      </div>
+
+      <div class="section-inner layout-rsvp">
+        
+        <div class="venue-info-col">
+          <span class="label-pre">THE VENUE</span>
+          <h2 class="display-title-sm">Sorina Hillside<br>Resort</h2>
+          
+          <address class="venue-address" id="venue-address-link-container">
+            <a href="https://maps.app.goo.gl/zMWdZP9G282eL4YT6?g_st=iw" target="_blank" rel="noopener noreferrer" id="directions-anchor" class="address-link">
+              Gat no. 297, behind Blue Bird Factory, Zalanwadi Phata,<br>
+              Gorhe Khurd, Panshet Road, Khadakwasla, Pune 411042
+            </a>
+          </address>
+          <p class="address-helper">Hover or tap the address to open Google Maps directions.</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Section 4: RSVP Form -->
+    <section id="rsvp-section" class="scroll-section" style="position: relative;">
+      
+      <!-- Full Bleed Right Column Image -->
+      <div class="rsvp-full-bleed-image">
+        <img src="./assets/image-2.jpg" alt="Pranav and Prajakta looking elegant">
+      </div>
+
+      <div class="section-inner layout-rsvp">
+        
+        <div class="rsvp-form-col">
+        
+        <div class="rsvp-header">
+          <span class="label-pre">CONFIRMATION</span>
+          <h2 class="display-title-sm">Will You Celebrate With Us?</h2>
+          <p class="rsvp-subtitle">Please let us know your presence by November 1st.</p>
+        </div>
+
+        <!-- Main Interactive Card -->
+        <div class="rsvp-card-container">
+          <div class="rsvp-card" id="rsvp-interactive-card">
+            
+            <!-- Form Panel -->
+            <form id="wedding-rsvp-form" class="rsvp-form" novalidate>
+              
+              <!-- Guest Initials Section -->
+              <div class="form-group initials-group">
+                <label class="input-label">YOUR INITIALS</label>
+                <div class="initials-wrapper">
+                  <div class="initial-box">
+                    <input type="text" id="initial-1" name="initial1" class="initial-input" maxlength="1" placeholder="_" autocomplete="off" required>
+                    <span class="input-line"></span>
+                  </div>
+                  <div class="initial-box">
+                    <input type="text" id="initial-2" name="initial2" class="initial-input" maxlength="1" placeholder="_" autocomplete="off" required>
+                    <span class="input-line"></span>
+                  </div>
+                  <div class="initial-box">
+                    <input type="text" id="initial-3" name="initial3" class="initial-input" maxlength="1" placeholder="_" autocomplete="off">
+                    <span class="input-line"></span>
+                  </div>
+                </div>
+                <span class="field-error-message" id="initials-error">Please fill in at least two initials.</span>
+              </div>
+
+              <!-- Guest Full Name Input -->
+              <div class="form-group">
+                <label for="guest-fullname" class="input-label">FULL NAME</label>
+                <div class="textbox-wrapper">
+                  <input type="text" id="guest-fullname" name="fullname" class="textbox-input" placeholder="e.g. PRANAV DEO" required>
+                  <span class="textbox-line"></span>
+                </div>
+                <span class="field-error-message" id="name-error">Your name is required to paint you into our story.</span>
+              </div>
+
+              <!-- Attendance Segmented Toggle -->
+              <div class="form-group">
+                <label class="input-label">ATTENDANCE</label>
+                <div class="segmented-toggle">
+                  <input type="radio" id="rsvp-accept" name="attendance" value="accept" required>
+                  <label for="rsvp-accept" class="toggle-label">
+                    <span class="toggle-circle"></span>
+                    WILL CELEBRATE WITH YOU
+                  </label>
+
+                  <input type="radio" id="rsvp-decline" name="attendance" value="decline">
+                  <label for="rsvp-decline" class="toggle-label">
+                    <span class="toggle-circle"></span>
+                    DECLINING WITH REGRET
+                  </label>
+                </div>
+                <span class="field-error-message" id="attendance-error">Please select an attendance option.</span>
+              </div>
+
+              <!-- Secondary Expanding Fields -->
+              <div class="rsvp-expanded-fields" id="expanded-details-container">
+                <div class="expanded-inner">
+                  <!-- Guest Count -->
+                  <div class="form-group">
+                    <label for="guest-count" class="input-label">NUMBER OF GUESTS</label>
+                    <div class="select-wrapper">
+                      <select id="guest-count" name="guestcount" class="select-input">
+                        <option value="1">1 Guest</option>
+                        <option value="2">2 Guests</option>
+                        <option value="3">3 Guests</option>
+                        <option value="4">4 Guests</option>
+                      </select>
+                      <span class="select-line"></span>
+                    </div>
+                  </div>
+
+                  <!-- Dietary Restrictions -->
+                  <div class="form-group">
+                    <label for="dietary-preference" class="input-label">DIETARY PREFERENCES</label>
+                    <div class="select-wrapper">
+                      <select id="dietary-preference" name="dietary" class="select-input">
+                        <option value="vegetarian">Vegetarian Celebration Meal</option>
+                        <option value="non-vegetarian">No Restrictions</option>
+                        <option value="other">Vegan / Special requests</option>
+                      </select>
+                      <span class="select-line"></span>
+                    </div>
+                  </div>
+
+                  <!-- Check-in Accommodation preference -->
+                  <div class="form-group">
+                    <label class="input-label">ACCOMMODATION PREFERENCE</label>
+                    <div class="checkbox-wrapper">
+                      <input type="checkbox" id="accommodation-check" name="accommodation" value="yes">
+                      <label for="accommodation-check" class="checkbox-custom-label">
+                        <span class="checkbox-box"></span>
+                        I require accommodation at Sorina Resort for the night of December 12th.
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Submit Button -->
+              <button type="submit" id="rsvp-submit-btn" class="btn-submit">
+                <span class="btn-text">CONFIRM ATTENDANCE</span>
+                <span class="btn-watercolor-bleed"></span>
+              </button>
+
+            </form>
+
+            <!-- Success State Panel (Initially Hidden) -->
+            <div class="rsvp-success-panel hidden" id="rsvp-success-panel">
+              <div class="split-side split-left"></div>
+              <div class="split-side split-right"></div>
+              <div class="success-message-card">
+                <div class="success-crest">P & P</div>
+                <h3 class="success-title">Your Presence is Woven</h3>
+                <p class="success-text">
+                  "Thank you, your presence is woven into our story. We will see you at Sorina Hillside Resort this December."
+                </p>
+                <p class="success-signature">With love,<br>Pranav & Prajakta</p>
+              </div>
+            </div>
+          </div> <!-- .rsvp-card -->
+        </div> <!-- .rsvp-card-container -->
+        </div> <!-- .rsvp-form-col -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- External Libraries -->
+  <script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/3.4.2/gl-matrix-min.js"></script>
+
+  <!-- Google Maps API -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCpsTYjUPrFHkhk_J9RHX4rjPu77lDZ-NU&callback=initMap" async defer></script>
+  
+  <!-- Application Logic -->
+  <script src="webgl-handler.js"></script>
+  <script src="audio-handler.js"></script>
+  <!-- Removed map-handler.js -->
+  <script src="form-handler.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
