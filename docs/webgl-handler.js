@@ -87,25 +87,25 @@ class WebGLHandler {
       
       // Basic hover/scroll translation on fallback images as progressive enhancement
       window.addEventListener('scroll', () => {
-        const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
-        const shouldScaleFallback = !this.useStaticMobileFallback;
+        const welcomeEl = document.getElementById('welcome-section');
+        let shouldShowSecondImage = false;
         
-        // Scale Image 4
-        if (scrollPercent <= 0.35) {
-          if (shouldScaleFallback) {
-            const scale = 1.0 + scrollPercent * 0.05;
-            img4.style.transform = `scale(${scale})`;
-          }
+        if (welcomeEl) {
+          // Trigger transition exactly when the Welcome section scrolls up past the middle of the screen
+          const rect = welcomeEl.getBoundingClientRect();
+          shouldShowSecondImage = rect.bottom < (window.innerHeight * 0.5);
+        } else {
+          // Fallback if section is missing
+          const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+          shouldShowSecondImage = scrollPercent > 0.35;
+        }
+        
+        if (!shouldShowSecondImage) {
           img4.classList.remove('hidden');
           img3.classList.add('hidden');
         } else {
-          // Cross-fade window (strict 150px around 35%)
           img4.classList.add('hidden');
           img3.classList.remove('hidden');
-          if (shouldScaleFallback) {
-            const scale = 1.0 + (scrollPercent - 0.35) * 0.05;
-            img3.style.transform = `scale(${scale})`;
-          }
         }
       });
     }
