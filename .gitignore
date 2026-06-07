@@ -19,3 +19,4 @@ raw_images/
 node_modules/
 dist/
 .env
+.DS_Store
