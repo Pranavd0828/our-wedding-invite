@@ -139,7 +139,7 @@ class FormHandler {
   }
 
   // Handle submit validation and transition initiation
-  handleSubmit(e) {
+  async handleSubmit(e) {
     e.preventDefault();
 
     if (!this.validateForm()) {
@@ -184,16 +184,39 @@ class FormHandler {
       timestamp: new Date().toISOString()
     };
 
-    // Encrypt & Save in LocalStorage securely (Privacy-first design demonstration)
-    try {
-      const encryptedData = btoa(JSON.stringify(rsvpData)); // Simple base64 mock encryption
-      localStorage.setItem('wedding_rsvp_payload', encryptedData);
-    } catch (err) {
-      console.warn("Storage error: ", err);
-    }
+    // API URL provided by the user
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw6pf6pM7UvA3HFmtu5kDoIzCETidmQRd1eF10JJOqPCGfXrUxK1pCeto09TbYRWA8Ycg/exec';
 
-    // Initiate submission sequence
-    this.triggerDissolutionSequence(attendanceVal);
+    // Show loading state
+    const originalBtnText = this.submitBtn.querySelector('.btn-text').innerText;
+    this.submitBtn.disabled = true;
+    this.submitBtn.querySelector('.btn-text').innerText = 'SAVING...';
+    this.submitBtn.style.opacity = '0.7';
+
+    try {
+      const response = await fetch(WEB_APP_URL, {
+        method: 'POST',
+        body: JSON.stringify(rsvpData),
+        // no-cors is NOT used here because the Google Apps Script handles OPTIONS properly and we want to read the JSON response.
+      });
+
+      const result = await response.json();
+
+      if (result.status === 'success') {
+        // Initiate submission sequence only on success
+        this.triggerDissolutionSequence(attendanceVal);
+      } else {
+        throw new Error(result.message || 'Unknown error from server');
+      }
+    } catch (err) {
+      console.error("API Submission Error:", err);
+      alert("There was an error saving your RSVP. Please check your connection and try again.");
+      
+      // Revert loading state
+      this.submitBtn.disabled = false;
+      this.submitBtn.querySelector('.btn-text').innerText = originalBtnText;
+      this.submitBtn.style.opacity = '1';
+    }
   }
 
   // Captures card geometry, starts canvas droplet simulation, then displays success confirmation card
@@ -305,7 +328,7 @@ class FormHandler {
       const text = document.getElementById('success-text');
       if (title && text) {
         title.innerText = "We Will Miss You";
-        text.innerText = `"Thank you for letting us know. We will miss you and appreciate your warm wishes from afar."`;
+        text.innerText = `"Thank you for letting us know. We appreciate your warm wishes from afar."`;
       }
     }
 
