@@ -154,11 +154,12 @@ body.night-mode .paper-overlay {
 @media (min-width: 1025px) {
   .webgl-viewport, .fallback-container {
     /* Desktop Default */
-    left: 52vw;
-    height: 96vh;
+    left: auto;
+    right: 4vw;
+    height: 92vh;
     width: auto;
     aspect-ratio: 740 / 1055; /* Perfectly matches the original image so it never crops or distorts */
-    top: 2vh;
+    top: 4vh;
     border-radius: 6px;
     transform: scale(1); /* Reset zoom on desktop */
   }
@@ -717,11 +718,12 @@ body.night-mode .paper-overlay {
 @media (min-width: 1025px) {
   .rsvp-full-bleed-image {
     /* Desktop Default (Matches webgl-viewport) */
-    left: 52vw;
-    height: 96vh;
+    left: auto;
+    right: 4vw;
+    height: 92vh;
     width: auto;
     aspect-ratio: 740 / 1055;
-    top: 2vh;
+    top: 4vh;
     border-radius: 6px;
   }
   
