@@ -7,7 +7,7 @@
 class Application {
   constructor() {
     this.webgl = null;
-    this.audio = null;
+
     this.map = null;
     this.form = null;
     
@@ -88,15 +88,14 @@ class Application {
 
   // Setup sub-module instances
   setupComponents() {
-    // Initialize Web Audio Handler
-    this.audio = new window.AudioHandler('audio-control-widget');
+
     
     // Initialize WebGL Background Layer
     this.webgl = new window.WebGLHandler('webgl-canvas', 'fallback-images-container');
     
     // Custom map handler removed (using Google Maps directly via initMap)
     // Initialize RSVP Form Controller
-    this.form = new window.FormHandler('wedding-rsvp-form', 'rsvp-interactive-card', 'rsvp-success-panel', this.audio);
+    this.form = new window.FormHandler('wedding-rsvp-form', 'rsvp-interactive-card', 'rsvp-success-panel');
 
     // Initial scroll sync
     this.orchestrateScrollTimeline();

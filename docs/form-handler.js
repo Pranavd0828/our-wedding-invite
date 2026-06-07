@@ -5,11 +5,11 @@
  */
 
 class FormHandler {
-  constructor(formId, cardId, successPanelId, audioHandler) {
+  constructor(formId, cardId, successPanelId) {
     this.form = document.getElementById(formId);
     this.card = document.getElementById(cardId);
     this.successPanel = document.getElementById(successPanelId);
-    this.audio = audioHandler;
+
     
     // Form fields
     this.fullName = document.getElementById('guest-fullname');
@@ -252,9 +252,7 @@ class FormHandler {
     }
 
     // 2. Play Resonant "Ink Drop" chime
-    if (this.audio) {
-      this.audio.playInkDropChime();
-    }
+
 
     // 3. Create watercolor particles canvas overlay
     const rect = this.card.getBoundingClientRect();
