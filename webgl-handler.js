@@ -38,9 +38,11 @@ class WebGLHandler {
       return;
     }
 
-    // Hide fallback container since WebGL is working
-    this.fallbackContainer.classList.add('visual-hide');
-
+    this.canvas.addEventListener("webglcontextlost", (e) => {
+      e.preventDefault();
+      console.error("WebGL context lost.");
+      this.displayFallback();
+    }, false);
     // Compile Shaders & Link Program
     if (!this.setupShaders()) {
       this.displayFallback();
@@ -228,6 +230,10 @@ class WebGLHandler {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
     const image = new Image();
+    image.onerror = () => {
+      console.error("Failed to load texture: " + src);
+      this.displayFallback();
+    };
     image.onload = () => {
       gl.bindTexture(gl.TEXTURE_2D, texture);
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
@@ -243,6 +249,10 @@ class WebGLHandler {
         this.imageAspect = aspect;
       }
       this.updateAspectCorrection();
+      
+      if (this.imagesLoaded['image3'] && this.imagesLoaded['image4']) {
+        this.texturesReady = true;
+      }
     };
     image.src = src;
   }
@@ -409,6 +419,13 @@ class WebGLHandler {
 
     // Draw full screen quad
     gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+    if (this.texturesReady && !this.firstFrameRendered) {
+      this.firstFrameRendered = true;
+      if (this.fallbackContainer && !this.fallbackContainer.classList.contains('visual-hide')) {
+        this.fallbackContainer.classList.add('visual-hide');
+      }
+    }
 
     requestAnimationFrame(() => this.tick());
   }

@@ -1,0 +1,21 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Private or unoptimized assets
+unused*/
+unused for rsvp/
+raw_images/
+*raw*
+*.psd
+*.ai
+
+# Build / node_modules (just in case)
+node_modules/
+dist/
+.env

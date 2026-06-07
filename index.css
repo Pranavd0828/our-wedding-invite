@@ -81,7 +81,7 @@ html, body {
   min-height: 100vh;
   min-height: 100dvh;
   background-color: var(--canvas-base);
-  background-image: url('./assets/gemini_mumbai_pune_bg.png');
+  background-image: url('./assets/gemini_mumbai_pune_bg.jpg');
   background-size: cover;
   background-position: center center;
   color: var(--ink-charcoal);

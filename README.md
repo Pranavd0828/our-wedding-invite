@@ -9,7 +9,7 @@ This project is a bespoke, single-page wedding invitation and RSVP portal that b
 
 ## 🎨 Design Philosophy
 The site follows a strict editorial layout, evoking the feeling of a high-end magazine printed on thick textured paper. 
-*   **Typography:** Cormorant Garamond (Serif) for elegant display titles and Outfit (Sans-Serif) for crisp, legible UI elements.
+*   **Typography:** Elegant system font stacks are utilized to guarantee zero-latency typographic rendering and prevent layout shifts.
 *   **Color Palette:** Rooted in nature - warm beige papers, rich olive greens, deep charcoal inks, and subtle gold accents.
 *   **Motion:** Cinematic and intentional. No jarring animations; instead, elements elegantly crossfade, blur, and scale into place in response to the user's scroll position.
 
@@ -28,7 +28,7 @@ Native scrolling is intercepted and managed via [Lenis](https://lenis.studiofrei
 ### 3. Persistent Split-Screen Layout
 To create an immersive editorial frame, the right side of the screen is strictly managed as a persistent, fixed-position visual canvas.
 *   As the user scrolls, the left side (text and timelines) scrolls normally.
-*   The right side (WebGL canvas, Google Map, and RSVP photo) remains statically pinned in place, elegantly crossfading content as new sections become active.
+*   The right side (WebGL canvas and static RSVP imagery) remains statically pinned in place, elegantly crossfading content as new sections become active.
 *   All visual elements perfectly share the same `740 / 1055` portrait aspect ratio.
 
 ### 4. Static Venue Illustration
@@ -44,6 +44,14 @@ A hidden `<audio>` element (controlled via `AudioHandler`) provides a subtle amb
 RSVP submissions are securely written to a private Google Sheet.
 *   **Realtime Submissions:** The `FormHandler` intercepts the native `<form>` submission, prevents default routing, and pushes the payload directly to a Google Apps Script Web App URL via a fetch request.
 *   **Success State:** Upon successful write, the form elegantly transitions into a custom "Thank You" confirmation panel without triggering a page reload.
+*   **Production Hardening:** The backend and frontend are protected against spam via honeypots, robust server-side deduplication against UUIDs, and strict sanitization rules (formula escaping) to prevent Google Sheet injection attacks.
+
+---
+
+## 🔒 Security & Privacy
+*   **Asset Optimization**: Backgrounds are dynamically compressed via high-quality JPEGs to remain under 1MB, ensuring swift loading.
+*   **Private Data**: All unused raw assets or personal files are deliberately kept outside the versioned repository.
+*   **Deduplication & Timeout**: Client-side fetch limits prevent locking, while the Google backend validates duplicate `submissionId` timestamps to ensure no row duplication occurs under spotty cellular conditions.
 
 ---
 

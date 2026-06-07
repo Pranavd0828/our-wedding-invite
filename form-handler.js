@@ -142,6 +142,8 @@ class FormHandler {
   async handleSubmit(e) {
     e.preventDefault();
 
+    if (this.isSubmitting) return;
+
     if (!this.validateForm()) {
       // Find the first error and scroll it into view for mobile UX
       const firstError = this.form.querySelector('.has-error');
@@ -175,30 +177,43 @@ class FormHandler {
       else if (guestType === 'family') totalGuests = parseInt(this.familyCountInput.value, 10);
     }
 
+    const hpInput = document.getElementById('hp-website');
+    const hpValue = hpInput ? hpInput.value : '';
+
+    const submissionId = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+
     // Capture form fields data
     const rsvpData = {
       fullName: this.fullName.value,
       attendance: attendanceVal,
       guestType: guestType,
       totalGuests: totalGuests,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      submissionId: submissionId,
+      hp: hpValue
     };
 
     // API URL provided by the user
-    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw6pf6pM7UvA3HFmtu5kDoIzCETidmQRd1eF10JJOqPCGfXrUxK1pCeto09TbYRWA8Ycg/exec';
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzWZMGFf0CSWsd1seh5SzC4zfLUKEB1AO75uBgHfc0OlM-8IKBnrI4DufHtxz7ELq7e9A/exec';
 
     // Show loading state
+    this.isSubmitting = true;
     const originalBtnText = this.submitBtn.querySelector('.btn-text').innerText;
     this.submitBtn.disabled = true;
     this.submitBtn.querySelector('.btn-text').innerText = 'SAVING...';
     this.submitBtn.style.opacity = '0.7';
 
+    // 10 second timeout for fetch
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
     try {
       const response = await fetch(WEB_APP_URL, {
         method: 'POST',
         body: JSON.stringify(rsvpData),
-        // no-cors is NOT used here because the Google Apps Script handles OPTIONS properly and we want to read the JSON response.
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
 
       const result = await response.json();
 
@@ -206,13 +221,19 @@ class FormHandler {
         // Initiate submission sequence only on success
         this.triggerDissolutionSequence(attendanceVal);
       } else {
-        throw new Error(result.message || 'Unknown error from server');
+        throw new Error(result.error || result.message || 'Unknown error from server');
       }
     } catch (err) {
+      clearTimeout(timeoutId);
       console.error("API Submission Error:", err);
-      alert("There was an error saving your RSVP. Please check your connection and try again.");
+      if (err.name === 'AbortError') {
+        alert("The connection timed out. Please check your internet and try again.");
+      } else {
+        alert(err.message || "There was an error saving your RSVP. Please check your connection and try again.");
+      }
       
       // Revert loading state
+      this.isSubmitting = false;
       this.submitBtn.disabled = false;
       this.submitBtn.querySelector('.btn-text').innerText = originalBtnText;
       this.submitBtn.style.opacity = '1';

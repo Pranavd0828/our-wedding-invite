@@ -10,7 +10,7 @@
   <meta property="og:type" content="website">
   <meta property="og:title" content="The Landscape of Us - Prajakta & Pranav">
   <meta property="og:description" content="You are warmly invited to join Prajakta & Pranav in celebrating their wedding at Sorina Hillside Resort this December.">
-  <meta property="og:image" content="./assets/image-4.jpg">
+  <meta property="og:image" content="https://www.thelandscapeofus.com/assets/image-4.jpg">
 
   <!-- Fonts -->
   
@@ -145,7 +145,7 @@
       
       <!-- Full Bleed Right Column Map (To match images) -->
       <div class="rsvp-full-bleed-image soft-fade-mount map-canvas-container">
-        <img src="./assets/venue-new-bg.png" alt="Venue Background" class="venue-image-bg" />
+        <img src="./assets/venue-new-bg.jpg" alt="Venue Background" class="venue-image-bg" />
       </div>
 
       <div class="section-inner layout-rsvp">
@@ -190,8 +190,11 @@
             <!-- Form Panel -->
             <form id="wedding-rsvp-form" class="rsvp-form" novalidate>
               
-              <!-- Guest Full Name Input -->
-              <div class="form-group">
+              <!-- Honeypot Field for Spam Bots -->
+            <input type="text" name="website" id="hp-website" tabindex="-1" autocomplete="off" style="position: absolute; left: -9999px; opacity: 0; pointer-events: none;" />
+
+            <!-- Group: Full Name -->
+            <div class="form-group">
                 <label for="guest-fullname" class="input-label">FULL NAME</label>
                 <div class="textbox-wrapper">
                   <input type="text" id="guest-fullname" name="fullname" class="textbox-input" placeholder="e.g. PRANAV DEO" required>
@@ -274,7 +277,7 @@
               <div class="split-side split-left"></div>
               <div class="split-side split-right"></div>
               <div class="success-message-card">
-                <div class="success-crest">P & P</div>
+                <div class="success-crest">THANK YOU</div>
                 <h3 class="success-title" id="success-title">Your Presence is Woven</h3>
                 <p class="success-text" id="success-text">
                   "Thank you for being a part of our story. We can't wait to see you at Sorina Hillside Resort this December."

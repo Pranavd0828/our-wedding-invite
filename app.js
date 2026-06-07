@@ -38,26 +38,46 @@ class Application {
     }
 
     // 4. Initialize Lenis Smooth Scroll (from portfolio repo)
-    this.lenis = new Lenis({
-      duration: 1.4,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothWheel: true,
-      wheelMultiplier: 1,
-      touchMultiplier: 2,
-      autoRaf: false, // Prevent conflict with our manual RAF loop
-    });
+    if (typeof Lenis !== 'undefined') {
+      this.lenis = new Lenis({
+        duration: 1.4,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        smoothWheel: true,
+        wheelMultiplier: 1,
+        touchMultiplier: 2,
+        autoRaf: false, // Prevent conflict with our manual RAF loop
+      });
 
-    this.lenis.on('scroll', () => {
+      this.lenis.on('scroll', () => {
+        this.orchestrateScrollTimeline();
+      });
+
+      this.raf = this.raf.bind(this);
+      requestAnimationFrame(this.raf);
+    } else {
+      console.warn('Lenis CDN missing. Falling back to native scrolling.');
+      this.lenis = null;
+      // Fallback: passive scroll listener with RAF throttling
+      let isTicking = false;
+      window.addEventListener('scroll', () => {
+        if (!isTicking) {
+          window.requestAnimationFrame(() => {
+            this.orchestrateScrollTimeline();
+            isTicking = false;
+          });
+          isTicking = true;
+        }
+      }, { passive: true });
+      // Initial trigger
       this.orchestrateScrollTimeline();
-    });
-
-    this.raf = this.raf.bind(this);
-    requestAnimationFrame(this.raf);
+    }
   }
 
   raf(time) {
-    this.lenis.raf(time);
-    requestAnimationFrame(this.raf);
+    if (this.lenis) {
+      this.lenis.raf(time);
+      requestAnimationFrame(this.raf);
+    }
   }
 
   onReady() {
