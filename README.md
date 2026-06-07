@@ -1,4 +1,4 @@
-# The Landscape of Us
+# Prajakta weds Pranav
 
 **A Premium Digital Wedding RSVP & Itinerary Experience**
 Designed for the wedding celebration of Pranav & Prajakta.
