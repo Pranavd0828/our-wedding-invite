@@ -184,7 +184,7 @@ body.night-mode .paper-overlay {
 }
 
 .glass-panel {
-  background: rgba(253, 251, 247, 0.85); /* 15% more frost opacity for mobile readability */
+  background: rgba(253, 251, 247, 0.90); /* 5% more frost opacity for mobile readability */
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   padding: 1.5rem;
