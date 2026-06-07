@@ -160,11 +160,11 @@ class Application {
       const mapTop = mapSection.getBoundingClientRect().top + scrollY;
       // Start fading out when the map section is coming into view
       if (scrollY > mapTop - winHeight * 0.6) {
-        canvasEl.classList.add('hidden');
-        fallbackEl.classList.add('hidden');
+        canvasEl.classList.add('visual-layer-hidden');
+        fallbackEl.classList.add('visual-layer-hidden');
       } else {
-        canvasEl.classList.remove('hidden');
-        fallbackEl.classList.remove('hidden');
+        canvasEl.classList.remove('visual-layer-hidden');
+        fallbackEl.classList.remove('visual-layer-hidden');
       }
     }
 
