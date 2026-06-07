@@ -40,9 +40,9 @@ The Venue section features a beautifully composed static image layout instead of
 A hidden `<audio>` element (controlled via `AudioHandler`) provides a subtle ambient soundtrack.
 *   Controlled by a bespoke "SOUND: OFF" toggle button pinned to the bottom right of the viewport.
 
-### 6. Firebase Backend Integration
-RSVP submissions are securely written to Firebase Firestore.
-*   **Realtime Submissions:** The `FormHandler` intercepts the native `<form>` submission, prevents default routing, and pushes the payload directly to a secure Firestore collection.
+### 6. Google Apps Script Backend Integration
+RSVP submissions are securely written to a private Google Sheet.
+*   **Realtime Submissions:** The `FormHandler` intercepts the native `<form>` submission, prevents default routing, and pushes the payload directly to a Google Apps Script Web App URL via a fetch request.
 *   **Success State:** Upon successful write, the form elegantly transitions into a custom "Thank You" confirmation panel without triggering a page reload.
 
 ---
@@ -50,9 +50,9 @@ RSVP submissions are securely written to Firebase Firestore.
 ## 📁 File Structure
 *   `index.html` - The master DOM structure. Contains the strict layout grid, WebGL fallback canvases, and all section content.
 *   `index.css` - The complete design system. Houses all custom CSS properties, flex/grid rules, micro-interactions, and Z-index layering.
-*   `app.js` - The global application orchestrator. Initializes Lenis, Google Maps, and tracks scroll position to dispatch phase updates to children.
+*   `app.js` - The global application orchestrator. Initializes Lenis and tracks scroll position to dispatch phase updates to children.
 *   `webgl-handler.js` - The GLSL shader compiler and WebGL context manager for the background image transitions.
-*   `form-handler.js` - Client-side validation and Firebase Firestore interaction logic for the RSVP form.
+*   `form-handler.js` - Client-side validation and Google Apps Script interaction logic for the RSVP form.
 *   `audio-handler.js` - Lightweight controller for the ambient background track.
 
 ---
