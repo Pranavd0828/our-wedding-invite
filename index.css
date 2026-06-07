@@ -1,5 +1,5 @@
 /* ==========================================================================
-   THE LANDSCAPE OF US — DESIGN SYSTEM & TOKENS
+   THE LANDSCAPE OF US - DESIGN SYSTEM & TOKENS
    ========================================================================== */
 
 /* Google Fonts Imports are in index.html */
@@ -16,11 +16,10 @@
   --warm-gold: #D46A3D;      /* Cutting Chai / Vada Pav Chutney Orange */
   --validation-amber: #B94629; /* Spicy red for errors */
   --validation-bg: #FCECE8;  /* Soft reddish backdrop */
-}
   
   /* Typography Variables */
-  --font-serif: 'Cormorant Garamond', Georgia, serif;
-  --font-sans: 'Cormorant Garamond', Georgia, serif;
+  --font-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   
   /* Layout Spacing (Fluid Spatial Mathematics) */
   --pad-inline: clamp(1.5rem, 4vw, 5rem);
@@ -75,10 +74,22 @@ body.night-mode {
   padding: 0;
 }
 
+/* Prevent global reset from breaking Google Maps UI (e.g. Zoom Controls) */
+#google-map * {
+  box-sizing: content-box;
+  margin: revert;
+  padding: revert;
+}
+
 html, body {
-  width: 100%;
+  margin: 0;
+  padding: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--canvas-base);
+  background-image: url('./assets/gemini_mumbai_pune_bg.png');
+  background-size: cover;
+  background-position: center center;
   color: var(--ink-charcoal);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -107,6 +118,7 @@ html, body {
   left: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   pointer-events: none;
   z-index: 9999;
   opacity: 0.06;
@@ -133,12 +145,15 @@ body.night-mode .paper-overlay {
   will-change: left, width, height, top, opacity;
 
   /* Mobile Default */
-  left: 5vw;
-  width: 90vw;
-  height: auto;
-  aspect-ratio: 740 / 1055; /* Perfectly matches the original image */
-  top: 10vh;
-  border-radius: 6px;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  aspect-ratio: auto;
+  top: 0;
+  border-radius: 0;
+  transform: scale(1.25); /* Aggressive zoom */
+  transform-origin: center 30%; /* Distribute zoom: 17.5% bottom crop, 7.5% top crop */
 }
 
 @media (min-width: 900px) {
@@ -150,6 +165,7 @@ body.night-mode .paper-overlay {
     aspect-ratio: 740 / 1055; /* Perfectly matches the original image so it never crops or distorts */
     top: 10vh;
     border-radius: 6px;
+    transform: scale(1); /* Reset zoom on desktop */
   }
 }
 
@@ -157,12 +173,54 @@ body.night-mode .paper-overlay {
   opacity: 0 !important;
 }
 
+/* --------------------------------------------------------------------------
+   Image Framing Styles
+   -------------------------------------------------------------------------- */
+.soft-fade-mount {
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  box-shadow: none;
+  /* Use a CSS mask radial gradient to create a beautiful dreamy vignette fade */
+  -webkit-mask-image: radial-gradient(ellipse 95% 95% at 50% 50%, black 70%, transparent 100%);
+  mask-image: radial-gradient(ellipse 95% 95% at 50% 50%, black 70%, transparent 100%);
+}
+
+.glass-panel {
+  background: rgba(253, 251, 247, 0.85); /* 15% more frost opacity for mobile readability */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 12px 32px rgba(34, 37, 33, 0.05);
+}
+
+@media (min-width: 900px) {
+  body {
+    background-attachment: fixed;
+  }
+  .glass-panel {
+    background: rgba(253, 251, 247, 0.70); /* Maintain original frost opacity for desktop */
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 2.5rem;
+  }
+  
+  .fallback-image {
+    transform: scale(1); /* Reset zoom on desktop */
+  }
+}
+
 .fallback-image {
   position: absolute;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: opacity 0.5s ease, transform 0.1s linear;
+  border-radius: 2px; /* Slight rounding to fit inside the mount */
+  transform: scale(1.25); /* Aggressive zoom */
+  transform-origin: center 30%; /* Distribute zoom: 17.5% bottom crop, 7.5% top crop */
+  transition: opacity 0.5s ease;
   will-change: transform, opacity;
 }
 
@@ -187,7 +245,7 @@ body.night-mode .paper-overlay {
 
 .display-title-sm {
   font-family: var(--font-serif);
-  font-size: clamp(1.8rem, 4.5vw + 0.8rem, 4.5rem);
+  font-size: clamp(2rem, 4vw, 3.5rem);
   font-weight: 300;
   letter-spacing: -0.02em;
   line-height: 1.1;
@@ -216,6 +274,7 @@ body.night-mode .paper-overlay {
   width: 100%;
   z-index: 10;
   min-height: 100vh;
+  min-height: 100dvh;
   background-color: transparent;
   overflow-x: hidden;
 }
@@ -224,6 +283,7 @@ body.night-mode .paper-overlay {
 .scroll-section {
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
   width: 100%;
   display: flex;
   align-items: center;
@@ -244,7 +304,6 @@ body.night-mode .paper-overlay {
   position: relative;
   z-index: 2;
   opacity: 0.3;
-  pointer-events: none;
   transform: scale(0.98);
   filter: blur(4px);
   transition: opacity 1.0s cubic-bezier(0.25, 1, 0.5, 1), transform 1.0s cubic-bezier(0.25, 1, 0.5, 1), filter 1.0s ease;
@@ -253,7 +312,6 @@ body.night-mode .paper-overlay {
 
 .scroll-section.active-phase .section-inner {
   opacity: 1;
-  pointer-events: auto;
   transform: scale(1);
   filter: blur(0px);
 }
@@ -286,7 +344,7 @@ body.night-mode .paper-overlay {
   font-size: clamp(1rem, 1.5vw, 1.25rem);
   font-family: var(--font-sans);
   line-height: 1.6;
-  max-width: 480px;
+  max-width: 550px;
   color: var(--ink-charcoal);
   margin-bottom: 2rem;
   opacity: 0.85;
@@ -303,11 +361,11 @@ body.night-mode .paper-overlay {
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
   border-top: 1px solid rgba(75, 89, 67, 0.2);
   width: 100%;
-  max-width: 380px;
+  max-width: 450px;
 }
 
 .detail-block {
@@ -345,7 +403,7 @@ body.night-mode .paper-overlay {
   gap: 0.5rem;
   opacity: 0.7;
   transition: opacity 0.3s ease;
-  margin-top: 4rem; /* Naturally pushes it below the details block */
+  margin-top: 1.5rem; /* Reduced from 4rem to keep it inside the glass panel */
 }
 
 .hint-text {
@@ -377,13 +435,13 @@ body.night-mode .paper-overlay {
 
 @media (min-width: 900px) {
   .layout-details {
-    padding-right: 50vw; /* Keep text constrained to the left half so it never overlaps the painting */
+    padding-right: 45vw; /* Match the 1.2fr grid ratio of the first section */
   }
 }
 
 .details-heading {
   margin-bottom: 3.5rem;
-  max-width: 600px;
+  max-width: 650px;
 }
 
 .details-subtitle {
@@ -396,7 +454,7 @@ body.night-mode .paper-overlay {
   flex-direction: column;
   gap: 3rem;
   margin-top: 3rem;
-  max-width: 450px;
+  max-width: 520px;
 }
 
 .timeline-event {
@@ -413,7 +471,7 @@ body.night-mode .paper-overlay {
 
 .event-title {
   font-family: var(--font-serif);
-  font-size: clamp(2rem, 3.5vw, 2.5rem);
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
   font-weight: 400;
   color: var(--ink-charcoal);
   line-height: 1.1;
@@ -462,7 +520,7 @@ body.night-mode .paper-overlay {
   font-size: 1.1rem;
   line-height: 1.6;
   color: rgba(74, 46, 27, 0.85); /* Slightly muted ink-charcoal */
-  max-width: 350px;
+  max-width: 400px;
 }
 
 /* --------------------------------------------------------------------------
@@ -481,6 +539,12 @@ body.night-mode .paper-overlay {
     grid-template-columns: 1fr 1.2fr;
     gap: 4rem;
   }
+  
+  .venue-info-col.glass-panel {
+    background: rgba(253, 251, 247, 0.70); /* Reset frost for desktop */
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
 }
 
 .venue-info-col {
@@ -488,6 +552,12 @@ body.night-mode .paper-overlay {
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
+}
+
+.venue-info-col.glass-panel {
+  background: rgba(253, 251, 247, 0.95); /* Even stronger frost specifically for the map */
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
 }
 
 .venue-address {
@@ -499,7 +569,7 @@ body.night-mode .paper-overlay {
 .address-link {
   display: block;
   font-family: var(--font-serif);
-  font-size: 1.1rem;
+  font-size: 1rem;
   line-height: 1.6;
   color: rgba(74, 46, 27, 0.85); /* Matches event-desc muted ink color */
   text-decoration: none;
@@ -587,6 +657,10 @@ body.night-mode .paper-overlay {
    Section 4: RSVP Form & Micro-Interactions
    -------------------------------------------------------------------------- */
 
+.hidden {
+  display: none !important;
+}
+
 .layout-rsvp {
   display: flex;
   flex-direction: column;
@@ -595,7 +669,7 @@ body.night-mode .paper-overlay {
 
 @media (min-width: 900px) {
   .layout-rsvp {
-    padding-right: 50vw; /* Keep text constrained to the left half so it never overlaps the right image */
+    padding-right: 45vw; /* Match the 1.2fr grid ratio of the first section */
   }
 }
 
@@ -613,18 +687,24 @@ body.night-mode .paper-overlay {
   transition: opacity 0.6s cubic-bezier(0.25, 1, 0.5, 1);
   
   /* Mobile Default (Matches webgl-viewport) */
-  left: 5vw;
-  width: 90vw;
-  height: auto;
-  aspect-ratio: 740 / 1055;
-  top: 10vh;
-  border-radius: 6px;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  aspect-ratio: auto;
+  top: 0;
+  border-radius: 0;
   overflow: hidden;
 }
 
 .scroll-section.active-phase .rsvp-full-bleed-image {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* Hide Map on Mobile (Use underlying background image instead) */
+.map-canvas-container {
+  display: none !important;
 }
 
 @media (min-width: 900px) {
@@ -637,6 +717,16 @@ body.night-mode .paper-overlay {
     top: 10vh;
     border-radius: 6px;
   }
+  
+  .rsvp-full-bleed-image img {
+    border-radius: 6px;
+    transform: none; /* Reset mobile zoom */
+  }
+
+  /* Show Map on Desktop */
+  .map-canvas-container {
+    display: block !important;
+  }
 }
 
 .rsvp-full-bleed-image img {
@@ -644,6 +734,8 @@ body.night-mode .paper-overlay {
   height: 100%;
   object-fit: cover;
   display: block;
+  transform: scale(1.25); /* Aggressive zoom */
+  transform-origin: center 30%; /* Distribute zoom: 17.5% bottom crop, 7.5% top crop */
 }
 
 .rsvp-header {
@@ -788,6 +880,9 @@ body.night-mode .paper-overlay {
   .segmented-toggle {
     grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
+  }
+  .segmented-toggle.segmented-three {
+    grid-template-columns: 1fr 1fr 1fr;
   }
 }
 

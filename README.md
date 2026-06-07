@@ -10,7 +10,7 @@ This project is a bespoke, single-page wedding invitation and RSVP portal that b
 ## 🎨 Design Philosophy
 The site follows a strict editorial layout, evoking the feeling of a high-end magazine printed on thick textured paper. 
 *   **Typography:** Cormorant Garamond (Serif) for elegant display titles and Outfit (Sans-Serif) for crisp, legible UI elements.
-*   **Color Palette:** Rooted in nature—warm beige papers, rich olive greens, deep charcoal inks, and subtle gold accents.
+*   **Color Palette:** Rooted in nature - warm beige papers, rich olive greens, deep charcoal inks, and subtle gold accents.
 *   **Motion:** Cinematic and intentional. No jarring animations; instead, elements elegantly crossfade, blur, and scale into place in response to the user's scroll position.
 
 ## 🏗 Architecture & Features
@@ -48,12 +48,12 @@ RSVP submissions are securely written to Firebase Firestore.
 ---
 
 ## 📁 File Structure
-*   `index.html` — The master DOM structure. Contains the strict layout grid, WebGL fallback canvases, and all section content.
-*   `index.css` — The complete design system. Houses all custom CSS properties, flex/grid rules, micro-interactions, and Z-index layering.
-*   `app.js` — The global application orchestrator. Initializes Lenis, Google Maps, and tracks scroll position to dispatch phase updates to children.
-*   `webgl-handler.js` — The GLSL shader compiler and WebGL context manager for the background image transitions.
-*   `form-handler.js` — Client-side validation and Firebase Firestore interaction logic for the RSVP form.
-*   `audio-handler.js` — Lightweight controller for the ambient background track.
+*   `index.html` - The master DOM structure. Contains the strict layout grid, WebGL fallback canvases, and all section content.
+*   `index.css` - The complete design system. Houses all custom CSS properties, flex/grid rules, micro-interactions, and Z-index layering.
+*   `app.js` - The global application orchestrator. Initializes Lenis, Google Maps, and tracks scroll position to dispatch phase updates to children.
+*   `webgl-handler.js` - The GLSL shader compiler and WebGL context manager for the background image transitions.
+*   `form-handler.js` - Client-side validation and Firebase Firestore interaction logic for the RSVP form.
+*   `audio-handler.js` - Lightweight controller for the ambient background track.
 
 ---
 

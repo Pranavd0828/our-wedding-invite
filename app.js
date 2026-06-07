@@ -288,31 +288,35 @@ window.initMap = function() {
 
   const location = { lat: 18.397, lng: 73.743 };
 
+  const isDesktop = window.innerWidth >= 900;
+
   const map = new google.maps.Map(mapElement, {
     center: location,
     zoom: 14,
     disableDefaultUI: true,
-    zoomControl: true,
-    gestureHandling: 'none',
+    zoomControl: isDesktop,
+    gestureHandling: isDesktop ? 'auto' : 'none',
     styles: [
       { featureType: "poi", elementType: "all", stylers: [{ visibility: "off" }] },
       { featureType: "transit", elementType: "all", stylers: [{ visibility: "off" }] },
-      { elementType: "geometry", stylers: [{ color: "#FDF8EB" }] },
-      { elementType: "labels.text.stroke", stylers: [{ color: "#FDF8EB" }] },
-      { elementType: "labels.text.fill", stylers: [{ color: "#4A2E1B" }] },
-      { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#4A2E1B" }] },
+      { elementType: "geometry", stylers: [{ color: "#F8F3EA" }] },
+      { elementType: "labels.text.stroke", stylers: [{ color: "#F8F3EA" }] },
+      { elementType: "labels.text.fill", stylers: [{ color: "#5E3A21" }] },
+      { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#5E3A21" }] },
       { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
-      { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#F0E6D2" }] },
-      { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#4A2E1B" }] },
-      { featureType: "water", elementType: "geometry", stylers: [{ color: "#EAE3D5" }] },
-      { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#4A2E1B" }] },
-      { featureType: "landscape.natural", elementType: "geometry", stylers: [{ color: "#F0E6D2" }] }
+      { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#D4B895" }] },
+      { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#8A6B52" }] },
+      { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#E8C89A" }] },
+      { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#D6A96C" }] },
+      { featureType: "water", elementType: "geometry", stylers: [{ color: "#85B8D4" }] },
+      { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#5E3A21" }] },
+      { featureType: "landscape.natural", elementType: "geometry", stylers: [{ color: "#F4EBD9" }] }
     ]
   });
 
   const customIcon = {
     path: google.maps.SymbolPath.CIRCLE,
-    fillColor: '#2C4C44',
+    fillColor: '#A64B38', /* Warm terracotta marker for a pop of color */
     fillOpacity: 1,
     strokeColor: '#ffffff',
     strokeWeight: 2,

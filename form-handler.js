@@ -12,13 +12,11 @@ class FormHandler {
     this.audio = audioHandler;
     
     // Form fields
-    this.initials = [
-      document.getElementById('initial-1'),
-      document.getElementById('initial-2'),
-      document.getElementById('initial-3')
-    ];
     this.fullName = document.getElementById('guest-fullname');
     this.attendanceToggles = document.getElementsByName('attendance');
+    this.guestTypeToggles = document.getElementsByName('guest_type');
+    this.familyCountContainer = document.getElementById('family-count-container');
+    this.familyCountInput = document.getElementById('family-guest-count');
     this.expandedFields = document.getElementById('expanded-details-container');
     
     // Submit btn
@@ -28,41 +26,10 @@ class FormHandler {
   }
 
   init() {
-    this.setupInitialsAutofocus();
     this.setupAttendanceToggles();
+    this.setupGuestTypeToggles();
     this.setupValidationListeners();
     this.form.addEventListener('submit', (e) => this.handleSubmit(e));
-  }
-
-  // Auto-focus progression for letterpress initials component
-  setupInitialsAutofocus() {
-    this.initials.forEach((input, index) => {
-      input.addEventListener('input', (e) => {
-        const val = input.value.trim();
-        if (val.length === 1) {
-          input.parentElement.classList.add('filled');
-          // Move to next input field
-          if (index < this.initials.length - 1) {
-            this.initials[index + 1].focus();
-          }
-        } else {
-          input.parentElement.classList.remove('filled');
-        }
-        this.clearFieldError('initials');
-      });
-
-      // Handle backspaces moving focus backward
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Backspace' && input.value.length === 0) {
-          if (index > 0) {
-            const prev = this.initials[index - 1];
-            prev.focus();
-            prev.value = '';
-            prev.parentElement.classList.remove('filled');
-          }
-        }
-      });
-    });
   }
 
   // Expand secondary RSVP questions dynamically when accepting
@@ -72,8 +39,30 @@ class FormHandler {
         this.clearFieldError('attendance');
         if (radio.value === 'accept') {
           this.expandedFields.classList.add('expanded');
+          // Re-apply height if family is already checked
+          if (document.querySelector('input[name="guest_type"][value="family"]')?.checked) {
+            this.expandedFields.style.gridTemplateRows = '1.5fr';
+          }
         } else {
           this.expandedFields.classList.remove('expanded');
+          this.expandedFields.style.gridTemplateRows = '0fr'; // Force collapse overriding any inline styles
+        }
+      });
+    });
+  }
+
+  // Show/Hide family count input
+  setupGuestTypeToggles() {
+    this.guestTypeToggles.forEach(radio => {
+      radio.addEventListener('change', () => {
+        this.clearFieldError('guest_type');
+        if (radio.value === 'family') {
+          this.familyCountContainer.classList.remove('hidden');
+          // Add extra height buffer to expanding container
+          this.expandedFields.style.gridTemplateRows = '1.5fr';
+        } else {
+          this.familyCountContainer.classList.add('hidden');
+          this.expandedFields.style.gridTemplateRows = '1fr';
         }
       });
     });
@@ -90,12 +79,14 @@ class FormHandler {
 
   clearFieldError(type) {
     let group = null;
-    if (type === 'initials') {
-      group = this.initials[0].closest('.form-group');
-    } else if (type === 'name') {
+    if (type === 'name') {
       group = this.fullName.closest('.form-group');
     } else if (type === 'attendance') {
       group = this.attendanceToggles[0].closest('.form-group');
+    } else if (type === 'guest_type') {
+      group = this.guestTypeToggles[0].closest('.form-group');
+    } else if (type === 'family_count') {
+      group = this.familyCountInput.closest('.form-group');
     }
     
     if (group && group.classList.contains('has-error')) {
@@ -106,27 +97,42 @@ class FormHandler {
   validateForm() {
     let isValid = true;
 
-    // 1. Validate Initials (Need at least 2 characters filled)
-    const filledCount = this.initials.filter(input => input.value.trim().length === 1).length;
-    if (filledCount < 2) {
-      const group = this.initials[0].closest('.form-group');
-      group.classList.add('has-error');
-      isValid = false;
-    }
-
-    // 2. Validate Full Name (Not empty)
+    // 1. Validate Full Name (Not empty)
     if (this.fullName.value.trim().length < 2) {
       const group = this.fullName.closest('.form-group');
       group.classList.add('has-error');
       isValid = false;
     }
 
-    // 3. Validate Attendance choice
+    // 2. Validate Attendance choice
     const isAttendanceChecked = Array.from(this.attendanceToggles).some(radio => radio.checked);
     if (!isAttendanceChecked) {
       const group = this.attendanceToggles[0].closest('.form-group');
       group.classList.add('has-error');
       isValid = false;
+    } else {
+      const attendanceVal = Array.from(this.attendanceToggles).find(r => r.checked).value;
+      
+      // 3. If accepting, validate guest type
+      if (attendanceVal === 'accept') {
+        const isGuestTypeChecked = Array.from(this.guestTypeToggles).some(radio => radio.checked);
+        if (!isGuestTypeChecked) {
+          const group = this.guestTypeToggles[0].closest('.form-group');
+          group.classList.add('has-error');
+          isValid = false;
+        } else {
+          const guestTypeVal = Array.from(this.guestTypeToggles).find(r => r.checked).value;
+          // 4. If family, validate family count
+          if (guestTypeVal === 'family') {
+            const count = parseInt(this.familyCountInput.value, 10);
+            if (isNaN(count) || count < 3 || count > 15) {
+              const group = this.familyCountInput.closest('.form-group');
+              group.classList.add('has-error');
+              isValid = false;
+            }
+          }
+        }
+      }
     }
 
     return isValid;
@@ -137,6 +143,12 @@ class FormHandler {
     e.preventDefault();
 
     if (!this.validateForm()) {
+      // Find the first error and scroll it into view for mobile UX
+      const firstError = this.form.querySelector('.has-error');
+      if (firstError) {
+        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+
       // Trigger horizontal shake feedback on validation error
       this.card.classList.add('shake-animation');
       
@@ -152,14 +164,23 @@ class FormHandler {
       return;
     }
 
+    const attendanceVal = Array.from(this.attendanceToggles).find(r => r.checked).value;
+    let guestType = null;
+    let totalGuests = 0;
+
+    if (attendanceVal === 'accept') {
+      guestType = Array.from(this.guestTypeToggles).find(r => r.checked).value;
+      if (guestType === 'just_me') totalGuests = 1;
+      else if (guestType === 'plus_one') totalGuests = 2;
+      else if (guestType === 'family') totalGuests = parseInt(this.familyCountInput.value, 10);
+    }
+
     // Capture form fields data
     const rsvpData = {
-      initials: this.initials.map(i => i.value).join(''),
       fullName: this.fullName.value,
-      attendance: Array.from(this.attendanceToggles).find(r => r.checked).value,
-      guestsCount: document.getElementById('guest-count').value,
-      dietary: document.getElementById('dietary-preference').value,
-      accommodation: document.getElementById('accommodation-check').checked,
+      attendance: attendanceVal,
+      guestType: guestType,
+      totalGuests: totalGuests,
       timestamp: new Date().toISOString()
     };
 
@@ -172,11 +193,11 @@ class FormHandler {
     }
 
     // Initiate submission sequence
-    this.triggerDissolutionSequence();
+    this.triggerDissolutionSequence(attendanceVal);
   }
 
   // Captures card geometry, starts canvas droplet simulation, then displays success confirmation card
-  triggerDissolutionSequence() {
+  triggerDissolutionSequence(attendanceVal) {
     // Disable inputs during transition
     this.submitBtn.disabled = true;
     this.submitBtn.style.opacity = '0.5';
@@ -269,7 +290,7 @@ class FormHandler {
       } else {
         // Particles dissolved: clean up canvas and trigger panel split
         canvas.remove();
-        this.displaySuccessPanel();
+        this.displaySuccessPanel(attendanceVal);
       }
     };
 
@@ -277,7 +298,17 @@ class FormHandler {
   }
 
   // Split panels open and reveal success confirmation card
-  displaySuccessPanel() {
+  displaySuccessPanel(attendanceVal) {
+    // Customize text based on attendance
+    if (attendanceVal === 'decline') {
+      const title = document.getElementById('success-title');
+      const text = document.getElementById('success-text');
+      if (title && text) {
+        title.innerText = "We Will Miss You";
+        text.innerText = `"Thank you for letting us know. We will miss you and appreciate your warm wishes from afar."`;
+      }
+    }
+
     this.successPanel.classList.remove('hidden');
     
     // Small delay to trigger DOM layout reflow
