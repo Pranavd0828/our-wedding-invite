@@ -74,12 +74,6 @@ body.night-mode {
   padding: 0;
 }
 
-/* Prevent global reset from breaking Google Maps UI (e.g. Zoom Controls) */
-#google-map * {
-  box-sizing: content-box;
-  margin: revert;
-  padding: revert;
-}
 
 html, body {
   margin: 0;
@@ -156,7 +150,7 @@ body.night-mode .paper-overlay {
   transform-origin: center 30%; /* Distribute zoom: 17.5% bottom crop, 7.5% top crop */
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1025px) {
   .webgl-viewport, .fallback-container {
     /* Desktop Default */
     left: 55vw;
@@ -196,7 +190,7 @@ body.night-mode .paper-overlay {
   box-shadow: 0 12px 32px rgba(34, 37, 33, 0.05);
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1025px) {
   body {
     background-attachment: fixed;
   }
@@ -326,7 +320,7 @@ body.night-mode .paper-overlay {
   width: 100%;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1025px) {
   .grid-welcome {
     grid-template-columns: 1.2fr 1fr;
   }
@@ -433,7 +427,7 @@ body.night-mode .paper-overlay {
   align-items: flex-start;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1025px) {
   .layout-details {
     padding-right: 45vw; /* Match the 1.2fr grid ratio of the first section */
   }
@@ -534,7 +528,7 @@ body.night-mode .paper-overlay {
   align-items: center;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1025px) {
   .grid-map {
     grid-template-columns: 1fr 1.2fr;
     gap: 4rem;
@@ -667,7 +661,7 @@ body.night-mode .paper-overlay {
   align-items: flex-start;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1025px) {
   .layout-rsvp {
     padding-right: 45vw; /* Match the 1.2fr grid ratio of the first section */
   }
@@ -702,12 +696,17 @@ body.night-mode .paper-overlay {
   pointer-events: auto;
 }
 
-/* Hide Map on Mobile (Use underlying background image instead) */
-.map-canvas-container {
-  display: none !important;
+.venue-image-bg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.25);
+  transform-origin: center 30%;
+  border-radius: 2px;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1025px) {
   .rsvp-full-bleed-image {
     /* Desktop Default (Matches webgl-viewport) */
     left: 55vw;
@@ -721,11 +720,6 @@ body.night-mode .paper-overlay {
   .rsvp-full-bleed-image img {
     border-radius: 6px;
     transform: none; /* Reset mobile zoom */
-  }
-
-  /* Show Map on Desktop */
-  .map-canvas-container {
-    display: block !important;
   }
 }
 

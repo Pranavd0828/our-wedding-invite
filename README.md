@@ -31,10 +31,10 @@ To create an immersive editorial frame, the right side of the screen is strictly
 *   The right side (WebGL canvas, Google Map, and RSVP photo) remains statically pinned in place, elegantly crossfading content as new sections become active.
 *   All visual elements perfectly share the same `740 / 1055` portrait aspect ratio.
 
-### 4. Interactive Google Maps Integration
-The Venue section features a live Google Map rendered securely via API.
-*   **Aesthetics:** The map is injected with a custom JSON styling array to perfectly match the site's beige/olive color palette. All default Google branding, unneeded POIs, and transit lines are hidden to maintain the premium feel.
-*   **UX:** Scroll trapping is strictly disabled (`gestureHandling: 'none'`), ensuring the user's scroll wheel is never hijacked when navigating past the venue details.
+### 4. Static Venue Illustration
+The Venue section features a beautifully composed static image layout instead of an interactive map.
+*   **Aesthetics:** Removing external map UI ensures the layout matches the exact visual styling (zoom cropping and aspect ratios) of the other editorial sections without injected UI controls breaking the design.
+*   **Responsive Breakpoints:** The layout relies on strict media queries. Devices up to 1024px (including iPad Pro in portrait mode) use the centered, full-bleed mobile layout, while wider screens snap into the elegant split-screen desktop frame.
 
 ### 5. Dynamic HTML5 Audio
 A hidden `<audio>` element (controlled via `AudioHandler`) provides a subtle ambient soundtrack.
