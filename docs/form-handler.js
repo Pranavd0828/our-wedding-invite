@@ -177,6 +177,17 @@ class FormHandler {
       else if (guestType === 'family') totalGuests = parseInt(this.familyCountInput.value, 10);
     }
 
+    let visitorId = 'unknown';
+    try {
+      if (typeof fpPromise !== 'undefined') {
+        const fp = await fpPromise;
+        const result = await fp.get();
+        visitorId = result.visitorId;
+      }
+    } catch (e) {
+      console.warn("Fingerprint could not be generated", e);
+    }
+
     const hpInput = document.getElementById('hp-website');
     const hpValue = hpInput ? hpInput.value : '';
 
@@ -190,7 +201,8 @@ class FormHandler {
       totalGuests: totalGuests,
       timestamp: new Date().toISOString(),
       submissionId: submissionId,
-      hp: hpValue
+      hp: hpValue,
+      visitorId: visitorId
     };
 
     // API URL provided by the user
