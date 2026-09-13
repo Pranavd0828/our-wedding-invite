@@ -19,4 +19,10 @@ raw_images/
 node_modules/
 dist/
 .env
-.DS_Store
+.env.*
+!.env.example
+/Code.gs
+/cgpt-code-review.md
+/codex-reviewed-feedback.md
+test-results/
+playwright-report/

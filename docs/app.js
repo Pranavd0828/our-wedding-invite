@@ -37,8 +37,32 @@ class Application {
       this.onReady();
     }
 
-    // 4. Initialize Lenis Smooth Scroll (from portfolio repo)
-    if (typeof Lenis !== 'undefined') {
+    this.scheduleScroll = () => {
+      if (this.scrollFrame) return;
+      this.scrollFrame = requestAnimationFrame(() => {
+        this.scrollFrame = null;
+        this.orchestrateScrollTimeline();
+      });
+    };
+    window.addEventListener('scroll', this.scheduleScroll, { passive: true });
+    window.addEventListener('resize', this.scheduleScroll);
+    window.addEventListener('pageshow', this.scheduleScroll);
+    document.querySelector('script[data-smooth-scroll]')?.addEventListener('load', () => this.setupSmoothScrolling());
+    this.motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    this.motionPreference.addEventListener('change', () => this.setupSmoothScrolling());
+    this.setupSmoothScrolling();
+  }
+
+  setupSmoothScrolling() {
+    if (this.motionPreference.matches) {
+      this.lenis?.destroy();
+      this.lenis = null;
+      cancelAnimationFrame(this.lenisFrame);
+      this.scheduleScroll();
+      return;
+    }
+    if (this.lenis || typeof Lenis === 'undefined') return;
+    try {
       this.lenis = new Lenis({
         duration: 1.4,
         easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -48,57 +72,51 @@ class Application {
         autoRaf: false, // Prevent conflict with our manual RAF loop
       });
 
-      this.lenis.on('scroll', () => {
-        this.orchestrateScrollTimeline();
-      });
-
-      this.raf = this.raf.bind(this);
-      requestAnimationFrame(this.raf);
-    } else {
-      console.warn('Lenis CDN missing. Falling back to native scrolling.');
+      this.lenis.on('scroll', this.scheduleScroll);
+      this.lenisFrame = requestAnimationFrame(time => this.raf(time));
+    } catch (error) {
+      console.warn('Smooth scrolling unavailable; using native scrolling.', error);
       this.lenis = null;
-      // Fallback: passive scroll listener with RAF throttling
-      let isTicking = false;
-      window.addEventListener('scroll', () => {
-        if (!isTicking) {
-          window.requestAnimationFrame(() => {
-            this.orchestrateScrollTimeline();
-            isTicking = false;
-          });
-          isTicking = true;
-        }
-      }, { passive: true });
-      // Initial trigger
-      this.orchestrateScrollTimeline();
     }
   }
 
   raf(time) {
     if (this.lenis) {
       this.lenis.raf(time);
-      requestAnimationFrame(this.raf);
+      this.lenisFrame = requestAnimationFrame(nextTime => this.raf(nextTime));
     }
   }
 
   onReady() {
     this.setupComponents();
     this.preventWidows();
-    window.addEventListener('resize', () => this.preventWidows());
+    document.querySelectorAll('.rsvp-full-bleed-image img').forEach(img => {
+      img.addEventListener('load', () => this.scheduleScroll?.());
+      img.addEventListener('error', () => this.scheduleScroll?.());
+    });
+    if (typeof ResizeObserver !== 'undefined') {
+      this.sectionObserver = new ResizeObserver(() => this.scheduleScroll?.());
+      document.querySelectorAll('.scroll-section').forEach(section => this.sectionObserver.observe(section));
+    }
   }
 
   // Setup sub-module instances
   setupComponents() {
 
     
-    // Initialize WebGL Background Layer
-    this.webgl = new window.WebGLHandler('webgl-canvas', 'fallback-images-container');
-    
-    // Custom map handler removed (using Google Maps directly via initMap)
     // Initialize RSVP Form Controller
     this.form = new window.FormHandler('wedding-rsvp-form', 'rsvp-interactive-card', 'rsvp-success-panel');
 
+    // Visual effects are optional; their failure must not prevent RSVP initialization.
+    try {
+      if (window.WebGLHandler) this.webgl = new window.WebGLHandler('webgl-canvas', 'fallback-images-container');
+    } catch (error) {
+      console.warn('Visual effects unavailable; keeping the image fallback.', error);
+    }
+
     // Initial scroll sync
     this.orchestrateScrollTimeline();
+    document.documentElement.classList.add('scroll-enhanced');
   }
 
   calibrateEnvironment() {
@@ -153,19 +171,15 @@ class Application {
       
     }
 
-    // 2. Hide WebGL Canvas when reaching Map/RSVP sections
-    const mapSection = document.getElementById('map-section');
-    if (mapSection && canvasEl && fallbackEl) {
-      const mapTop = mapSection.getBoundingClientRect().top + scrollY;
-      // Start fading out when the map section is coming into view
-      if (scrollY > mapTop - winHeight * 0.6) {
-        canvasEl.classList.add('visual-layer-hidden');
-        fallbackEl.classList.add('visual-layer-hidden');
-      } else {
-        canvasEl.classList.remove('visual-layer-hidden');
-        fallbackEl.classList.remove('visual-layer-hidden');
-      }
-    }
+    // Keep the last usable image until the next section's image is available.
+    const imageLayers = [...document.querySelectorAll('.rsvp-full-bleed-image')];
+    const activeLayer = imageLayers.filter(layer => {
+      const img = layer.querySelector('img');
+      return layer.closest('section').getBoundingClientRect().top <= winHeight * 0.7 && img?.complete && img.naturalWidth > 0;
+    }).pop();
+    imageLayers.forEach(layer => layer.classList.toggle('image-phase-active', layer === activeLayer));
+    canvasEl?.classList.toggle('visual-layer-hidden', Boolean(activeLayer));
+    fallbackEl?.classList.toggle('visual-layer-hidden', Boolean(activeLayer));
 
     // Update WebGL rendering parameters
     if (this.webgl) {
@@ -214,19 +228,16 @@ class Application {
   // Typographic Widow Control: prevent single trailing words in paragraphs
   preventWidows() {
     const textBlocks = document.querySelectorAll(
-      '.intro-description, .event-desc, .success-text, .rsvp-subtitle, .details-subtitle'
+      '.intro-description, .rsvp-subtitle, .details-subtitle'
     );
     
     textBlocks.forEach(el => {
-      const htmlContent = el.innerHTML.trim();
-      // Skip if already formatted
-      if (htmlContent.includes('&nbsp;')) return;
-      
-      const words = htmlContent.split(' ');
+      if (el.children.length || el.textContent.includes('\u00a0')) return;
+      const words = el.textContent.trim().split(/\s+/);
       if (words.length > 4) {
         const lastWord = words.pop();
         const secondLastWord = words.pop();
-        el.innerHTML = words.join(' ') + ' ' + secondLastWord + '&nbsp;' + lastWord;
+        el.textContent = words.join(' ') + ' ' + secondLastWord + '\u00a0' + lastWord;
       }
     });
   }
@@ -238,6 +249,7 @@ class Application {
     canvas.height = 32;
     const ctx = canvas.getContext('2d');
     const favicon = document.getElementById('favicon');
+    if (!ctx || !favicon) return;
 
     let progress = 0;
     const drawFavicon = () => {
@@ -299,5 +311,3 @@ class Application {
 
 // Instantiate application immediately
 window.AppInstance = new Application();
-
-

@@ -21,6 +21,14 @@ class FormHandler {
     
     // Submit btn
     this.submitBtn = document.getElementById('rsvp-submit-btn');
+    this.status = document.getElementById('rsvp-status');
+    this.isSubmitting = false;
+    this.pendingSubmission = null;
+    try {
+      this.pendingSubmission = JSON.parse(sessionStorage.getItem('rsvp-pending') || 'null');
+    } catch {
+      // Storage can be unavailable in private or embedded browsers.
+    }
 
     this.init();
   }
@@ -30,6 +38,9 @@ class FormHandler {
     this.setupGuestTypeToggles();
     this.setupValidationListeners();
     this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+    this.submitBtn.disabled = false;
+    this.syncConditionalFields();
+    window.addEventListener('pageshow', () => this.syncConditionalFields());
   }
 
   // Expand secondary RSVP questions dynamically when accepting
@@ -37,16 +48,7 @@ class FormHandler {
     this.attendanceToggles.forEach(radio => {
       radio.addEventListener('change', () => {
         this.clearFieldError('attendance');
-        if (radio.value === 'accept') {
-          this.expandedFields.classList.add('expanded');
-          // Re-apply height if family is already checked
-          if (document.querySelector('input[name="guest_type"][value="family"]')?.checked) {
-            this.expandedFields.style.gridTemplateRows = '1.5fr';
-          }
-        } else {
-          this.expandedFields.classList.remove('expanded');
-          this.expandedFields.style.gridTemplateRows = '0fr'; // Force collapse overriding any inline styles
-        }
+        this.syncConditionalFields();
       });
     });
   }
@@ -56,16 +58,26 @@ class FormHandler {
     this.guestTypeToggles.forEach(radio => {
       radio.addEventListener('change', () => {
         this.clearFieldError('guest_type');
-        if (radio.value === 'family') {
-          this.familyCountContainer.classList.remove('hidden');
-          // Add extra height buffer to expanding container
-          this.expandedFields.style.gridTemplateRows = '1.5fr';
-        } else {
-          this.familyCountContainer.classList.add('hidden');
-          this.expandedFields.style.gridTemplateRows = '1fr';
-        }
+        this.syncConditionalFields();
       });
     });
+  }
+
+  syncConditionalFields() {
+    const accepting = this.form.querySelector('[name="attendance"]:checked')?.value === 'accept';
+    const family = accepting && this.form.querySelector('[name="guest_type"]:checked')?.value === 'family';
+    this.expandedFields.classList.toggle('expanded', accepting);
+    this.expandedFields.inert = !accepting;
+    this.expandedFields.setAttribute('aria-hidden', String(!accepting));
+    this.guestTypeToggles.forEach(radio => {
+      radio.disabled = !accepting;
+      radio.required = accepting;
+    });
+    this.familyCountContainer.classList.toggle('hidden', !family);
+    this.familyCountInput.disabled = !family;
+    this.familyCountInput.required = family;
+    if (!accepting) this.clearFieldError('guest_type');
+    if (!family) this.clearFieldError('family_count');
   }
 
   // Clear field level errors immediately on user action
@@ -75,6 +87,7 @@ class FormHandler {
         this.clearFieldError('name');
       }
     });
+    this.familyCountInput.addEventListener('input', () => this.clearFieldError('family_count'));
   }
 
   clearFieldError(type) {
@@ -92,13 +105,15 @@ class FormHandler {
     if (group && group.classList.contains('has-error')) {
       group.classList.remove('has-error');
     }
+    group?.querySelectorAll('input').forEach(input => input.removeAttribute('aria-invalid'));
   }
 
   validateForm() {
     let isValid = true;
+    ['name', 'attendance', 'guest_type', 'family_count'].forEach(type => this.clearFieldError(type));
 
     // 1. Validate Full Name (Not empty)
-    if (this.fullName.value.trim().length < 2) {
+    if (this.fullName.value.trim().length < 2 || this.fullName.value.trim().length > 100) {
       const group = this.fullName.closest('.form-group');
       group.classList.add('has-error');
       isValid = false;
@@ -124,8 +139,8 @@ class FormHandler {
           const guestTypeVal = Array.from(this.guestTypeToggles).find(r => r.checked).value;
           // 4. If family, validate family count
           if (guestTypeVal === 'family') {
-            const count = parseInt(this.familyCountInput.value, 10);
-            if (isNaN(count) || count < 3 || count > 15) {
+            const count = Number(this.familyCountInput.value);
+            if (!Number.isInteger(count) || count < 3 || count > 15) {
               const group = this.familyCountInput.closest('.form-group');
               group.classList.add('has-error');
               isValid = false;
@@ -135,7 +150,52 @@ class FormHandler {
       }
     }
 
+    this.form.querySelectorAll('.has-error input').forEach(input => input.setAttribute('aria-invalid', 'true'));
     return isValid;
+  }
+
+  prefersReducedMotion() {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  setBusy(busy) {
+    this.isSubmitting = busy;
+    this.form.inert = busy;
+    this.form.setAttribute('aria-busy', String(busy));
+    this.submitBtn.disabled = busy;
+    this.submitBtn.querySelector('.btn-text').textContent = busy ? 'SAVING...' : 'CONFIRM ATTENDANCE';
+    this.submitBtn.style.opacity = busy ? '0.7' : '1';
+  }
+
+  async getVisitorId() {
+    if (typeof fpPromise === 'undefined') return 'unknown';
+    let timeout;
+    try {
+      return await Promise.race([
+        Promise.resolve(fpPromise).then(fp => fp?.get()).then(result => result?.visitorId || 'unknown').catch(() => 'unknown'),
+        new Promise(resolve => { timeout = setTimeout(() => resolve('unknown'), 1500); })
+      ]);
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  submissionFor(fields) {
+    const signature = JSON.stringify(fields);
+    if (this.pendingSubmission?.signature === signature && typeof this.pendingSubmission.submissionId === 'string') {
+      return this.pendingSubmission;
+    }
+    this.pendingSubmission = {
+      signature,
+      submissionId: typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2),
+      timestamp: new Date().toISOString()
+    };
+    try {
+      sessionStorage.setItem('rsvp-pending', JSON.stringify(this.pendingSubmission));
+    } catch {
+      // The in-memory ID still protects retries in this page when storage is blocked.
+    }
+    return this.pendingSubmission;
   }
 
   // Handle submit validation and transition initiation
@@ -148,14 +208,15 @@ class FormHandler {
       // Find the first error and scroll it into view for mobile UX
       const firstError = this.form.querySelector('.has-error');
       if (firstError) {
-        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstError.querySelector('input')?.focus({ preventScroll: true });
+        firstError.scrollIntoView({ behavior: this.prefersReducedMotion() ? 'auto' : 'smooth', block: 'center' });
       }
 
       // Trigger horizontal shake feedback on validation error
-      this.card.classList.add('shake-animation');
+      if (!this.prefersReducedMotion()) this.card.classList.add('shake-animation');
       
       // Trigger a light haptic tap if mobile API available (haptic notch on error)
-      if (navigator.vibrate) {
+      if (navigator.vibrate && !this.prefersReducedMotion()) {
         navigator.vibrate([40, 30, 40]);
       }
       
@@ -177,83 +238,76 @@ class FormHandler {
       else if (guestType === 'family') totalGuests = parseInt(this.familyCountInput.value, 10);
     }
 
-    let visitorId = 'unknown';
-    try {
-      if (typeof fpPromise !== 'undefined') {
-        const fp = await fpPromise;
-        const result = await fp.get();
-        visitorId = result.visitorId;
-      }
-    } catch (e) {
-      console.warn("Fingerprint could not be generated", e);
-    }
-
     const hpInput = document.getElementById('hp-website');
     const hpValue = hpInput ? hpInput.value : '';
 
-    const submissionId = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-
-    // Capture form fields data
-    const rsvpData = {
-      fullName: this.fullName.value,
+    // Capture and lock before any asynchronous work, including optional fingerprinting.
+    const fields = {
+      fullName: this.fullName.value.trim(),
       attendance: attendanceVal,
       guestType: guestType,
       totalGuests: totalGuests,
-      timestamp: new Date().toISOString(),
-      submissionId: submissionId,
-      hp: hpValue,
-      visitorId: visitorId
+      hp: hpValue
     };
+    const submission = this.submissionFor(fields);
 
     // API URL provided by the user
     const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzWZMGFf0CSWsd1seh5SzC4zfLUKEB1AO75uBgHfc0OlM-8IKBnrI4DufHtxz7ELq7e9A/exec';
 
     // Show loading state
-    this.isSubmitting = true;
-    const originalBtnText = this.submitBtn.querySelector('.btn-text').innerText;
-    this.submitBtn.disabled = true;
-    this.submitBtn.querySelector('.btn-text').innerText = 'SAVING...';
-    this.submitBtn.style.opacity = '0.7';
+    this.setBusy(true);
+    this.status.textContent = '';
+    this.status.classList.add('hidden');
 
     // 10 second timeout for fetch
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     try {
+      const visitorId = await this.getVisitorId();
+      const rsvpData = { ...fields, submissionId: submission.submissionId, timestamp: submission.timestamp, visitorId };
       const response = await fetch(WEB_APP_URL, {
         method: 'POST',
         body: JSON.stringify(rsvpData),
         signal: controller.signal
       });
-      clearTimeout(timeoutId);
-
+      if (!response.ok) throw new Error('http-error');
       const result = await response.json();
 
-      if (result.status === 'success') {
+      if (result?.status === 'success') {
+        clearTimeout(timeoutId);
+        try { sessionStorage.removeItem('rsvp-pending'); } catch { /* Storage is optional. */ }
+        this.pendingSubmission = null;
         // Initiate submission sequence only on success
         this.triggerDissolutionSequence(attendanceVal);
       } else {
-        throw new Error(result.error || result.message || 'Unknown error from server');
+        const message = String(result?.error || result?.message || '');
+        throw new Error(/^Server busy, try again\.?$/i.test(message) ? 'server-busy' : 'server-error');
       }
     } catch (err) {
       clearTimeout(timeoutId);
-      console.error("API Submission Error:", err);
-      if (err.name === 'AbortError') {
-        alert("The connection timed out. Please check your internet and try again.");
+      if (controller.signal.aborted || err.name === 'AbortError') {
+        this.status.textContent = 'We could not confirm your RSVP in time. Please retry; your answers have been kept.';
+      } else if (err.message === 'server-busy') {
+        this.status.textContent = 'Server busy, try again.';
       } else {
-        alert(err.message || "There was an error saving your RSVP. Please check your connection and try again.");
+        this.status.textContent = 'We could not confirm your RSVP. Please check your connection and try again.';
       }
-      
-      // Revert loading state
-      this.isSubmitting = false;
-      this.submitBtn.disabled = false;
-      this.submitBtn.querySelector('.btn-text').innerText = originalBtnText;
-      this.submitBtn.style.opacity = '1';
+      this.status.classList.remove('hidden');
+      this.setBusy(false);
+      this.status.focus({ preventScroll: true });
+      this.status.scrollIntoView({ behavior: this.prefersReducedMotion() ? 'auto' : 'smooth', block: 'nearest' });
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 
   // Captures card geometry, starts canvas droplet simulation, then displays success confirmation card
   triggerDissolutionSequence(attendanceVal) {
+    if (this.prefersReducedMotion()) {
+      this.displaySuccessPanel(attendanceVal);
+      return;
+    }
     // Disable inputs during transition
     this.submitBtn.disabled = true;
     this.submitBtn.style.opacity = '0.5';
@@ -281,6 +335,11 @@ class FormHandler {
     this.card.appendChild(canvas);
 
     const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      canvas.remove();
+      this.displaySuccessPanel(attendanceVal);
+      return;
+    }
 
     // Fade out form elements smoothly
     this.form.classList.add('fade-out');
@@ -363,7 +422,11 @@ class FormHandler {
       }
     }
 
+    this.form.classList.add('hidden');
+    this.form.setAttribute('aria-busy', 'false');
     this.successPanel.classList.remove('hidden');
+    this.successPanel.focus({ preventScroll: true });
+    this.successPanel.scrollIntoView({ behavior: this.prefersReducedMotion() ? 'auto' : 'smooth', block: 'center' });
     
     // Small delay to trigger DOM layout reflow
     setTimeout(() => {

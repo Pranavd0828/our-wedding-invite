@@ -1,76 +1,53 @@
 # Prajakta weds Pranav
 
-**A Premium Digital Wedding RSVP & Itinerary Experience**
-Designed for the wedding celebration of Pranav & Prajakta.
+A static wedding invitation and RSVP site for December 11-12, 2026, at Sorina Hillside Resort, Pune.
 
-This project is a bespoke, single-page wedding invitation and RSVP portal that blends modern web technologies with a highly crafted editorial aesthetic. It relies on vanilla HTML/CSS/JS to achieve blistering performance and leverages WebGL and smooth scrolling for a premium, native-app feel.
+Live site: https://pranavd0828.github.io/our-wedding-invite/
 
----
+## Project structure
 
-## 🎨 Design Philosophy
-The site follows a strict editorial layout, evoking the feeling of a high-end magazine printed on thick textured paper. 
-*   **Typography:** Elegant system font stacks are utilized to guarantee zero-latency typographic rendering and prevent layout shifts.
-*   **Color Palette:** Rooted in nature - warm beige papers, rich olive greens, deep charcoal inks, and subtle gold accents.
-*   **Motion:** Cinematic and intentional. No jarring animations; instead, elements elegantly crossfade, blur, and scale into place in response to the user's scroll position.
+- `docs/`: the public GitHub Pages site, including HTML, CSS, JavaScript and image assets.
+- `docs/app.js`: scroll state, section transitions and optional Lenis smooth scrolling.
+- `docs/webgl-handler.js`: desktop image rendering, with DOM image fallbacks on phones, tablets, reduced-motion settings or WebGL failure.
+- `docs/form-handler.js`: conditional RSVP questions, client validation, submission and confirmation.
+- `tests/invitation.cjs`: browser regression checks. Every RSVP request is intercepted; test guests never reach the live sheet.
 
-## 🏗 Architecture & Features
+There is no build step, audio player or interactive map. The venue address links to Google Maps. GitHub Pages should publish `main` / `docs`, with no custom domain required.
 
-### 1. WebGL Texture Crossfading
-The background visuals of the Welcome and Festivities sections are powered by a custom WebGL fragment shader (`webgl-handler.js`). 
-*   Instead of standard CSS image opacity, the site uses GLSL shaders to mathematically mix two images (`image-4.jpg` and `image-3.jpg`) based on the exact scroll percentage.
-*   A localized "watercolor edge" algorithm introduces slight visual distortion during the transition, simulating pigment bleeding into paper.
+## Local preview
 
-### 2. Smooth Scrolling (Lenis)
-Native scrolling is intercepted and managed via [Lenis](https://lenis.studiofreight.com/). 
-*   Ensures a velvety smooth, continuous scroll experience on both desktop and trackpads.
-*   The `app.js` module hooks into Lenis' `requestAnimationFrame` loop to trigger dynamic `.active-phase` classes on DOM elements exactly when they cross strict viewport thresholds.
+Serve the site over HTTP so WebGL textures work:
 
-### 3. Persistent Split-Screen Layout
-To create an immersive editorial frame, the right side of the screen is strictly managed as a persistent, fixed-position visual canvas.
-*   As the user scrolls, the left side (text and timelines) scrolls normally.
-*   The right side (WebGL canvas and static RSVP imagery) remains statically pinned in place, elegantly crossfading content as new sections become active.
-*   All visual elements perfectly share the same `740 / 1055` portrait aspect ratio.
+```sh
+python3 -m http.server 8080 --bind 127.0.0.1 --directory docs
+```
 
-### 4. Static Venue Illustration
-The Venue section features a beautifully composed static image layout instead of an interactive map.
-*   **Aesthetics:** Removing external map UI ensures the layout matches the exact visual styling (zoom cropping and aspect ratios) of the other editorial sections without injected UI controls breaking the design.
-*   **Responsive Breakpoints:** The layout relies on strict media queries. Devices up to 1024px (including iPad Pro in portrait mode) use the centered, full-bleed mobile layout, while wider screens snap into the elegant split-screen desktop frame.
+Open http://127.0.0.1:8080. An occupied port can be replaced with another number.
 
-### 5. Dynamic HTML5 Audio
-A hidden `<audio>` element (controlled via `AudioHandler`) provides a subtle ambient soundtrack.
-*   Controlled by a bespoke "SOUND: OFF" toggle button pinned to the bottom right of the viewport.
+## Browser tests
 
-### 6. Google Apps Script Backend Integration
-RSVP submissions are securely written to a private Google Sheet.
-*   **Realtime Submissions:** The `FormHandler` intercepts the native `<form>` submission, prevents default routing, and pushes the payload directly to a Google Apps Script Web App URL via a fetch request.
-*   **Success State:** Upon successful write, the form elegantly transitions into a custom "Thank You" confirmation panel without triggering a page reload.
-*   **Production Hardening:** The backend and frontend are protected against spam via honeypots, robust server-side deduplication against UUIDs, and strict sanitization rules (formula escaping) to prevent Google Sheet injection attacks.
+Use a supported Node.js LTS release:
 
----
+```sh
+npm ci
+npx playwright install chromium
+npm test
+```
 
-## 🔒 Security & Privacy
-*   **Asset Optimization**: Backgrounds are dynamically compressed via high-quality JPEGs to remain under 1MB, ensuring swift loading.
-*   **Private Data**: All unused raw assets or personal files are deliberately kept outside the versioned repository.
-*   **Deduplication & Timeout**: Client-side fetch limits prevent locking, while the Google backend validates duplicate `submissionId` timestamps to ensure no row duplication occurs under spotty cellular conditions.
+For the WebKit engine, install it with `npx playwright install webkit` and run `TEST_BROWSER=webkit npm test`. `BROWSER_EXECUTABLE` can select an installed browser executable; `TEST_OUTPUT_DIR` enables screenshots and a JSON results file. These checks emulate screen sizes and browser behavior; they do not replace a physical iPhone/Safari check for toolbar resizing, the software keyboard or GPU flicker.
 
----
+## RSVP behavior
 
-## 📁 File Structure
-*   `index.html` - The master DOM structure. Contains the strict layout grid, WebGL fallback canvases, and all section content.
-*   `index.css` - The complete design system. Houses all custom CSS properties, flex/grid rules, micro-interactions, and Z-index layering.
-*   `app.js` - The global application orchestrator. Initializes Lenis and tracks scroll position to dispatch phase updates to children.
-*   `webgl-handler.js` - The GLSL shader compiler and WebGL context manager for the background image transitions.
-*   `form-handler.js` - Client-side validation and Google Apps Script interaction logic for the RSVP form.
-*   `audio-handler.js` - Lightweight controller for the ambient background track.
+The form locks before asynchronous work and gives the full request, including reading JSON, a ten-second deadline. Optional fingerprint lookup has a separate 1.5-second limit. An unchanged retry reuses its submission ID, including after reload in the same tab where session storage is available. Changing answers creates a new submission. A timeout does not prove that the server failed to save the response.
 
----
+The payload retains `fullName`, `attendance`, `guestType`, `totalGuests`, `timestamp`, `submissionId`, `hp` and `visitorId`. The client validates the name and whole-number family counts, but client validation is not a security boundary.
 
-## 🚀 Local Development
-Because of the WebGL cross-origin texture requirements, this site **cannot** be run by double-clicking the `index.html` file. It must be served via a local web server.
+## Backend and privacy
 
-1. Ensure you have `npx` installed.
-2. Run the site locally:
-   ```bash
-   npx http-server . -p 8080
-   ```
-3. Open `http://localhost:8080` in your browser.
+The deployed Google Apps Script and spreadsheet are maintained separately and are not in this repository. Client tests cannot establish whether the live backend enforces schema validation, formula safety, locking, rate limits or idempotency. Verify those rules in the deployed script, especially that deduplication uses `submissionId` and does not prevent different guests sharing one device from replying.
+
+The web-app endpoint is necessarily public in the browser. The honeypot and fingerprint are not authentication or complete spam protection. FingerprintJS loads third-party code and supplies a device identifier; its availability is optional for submission. Lenis is also optional. The unused gl-matrix dependency has been removed.
+
+Session storage retains a pending submission signature and ID in the guest's tab until confirmed success; storage failures fall back to an in-memory ID. The served RSVP JPEG is about 260KB. The original PNG and previous artwork remain tracked, but are not requested by the page.
+
+The repository itself is public. Publishing only `docs/` limits the website's files, not what is visible through GitHub or Git history. Keep private backend files, guest lists, credentials and raw personal documents outside the repository.

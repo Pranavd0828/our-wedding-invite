@@ -25,15 +25,24 @@ class WebGLHandler {
     this.targetParallax = { x: 0, y: 0 };
     this.currentParallax = { x: 0, y: 0 };
     this.hasGyro = false;
-    this.useStaticMobileFallback = window.matchMedia('(max-width: 767px)').matches;
+    this.fallbackPreference = window.matchMedia('(max-width: 1024px), (prefers-reduced-motion: reduce)');
+    this.useStaticMobileFallback = this.fallbackPreference.matches;
+    this.canvas.style.visibility = 'hidden';
+    this.fallbackPreference.addEventListener('change', event => {
+      if (event.matches) this.displayFallback();
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) cancelAnimationFrame(this.frameId);
+      this.frameId = null;
+      if (!document.hidden) this.requestRender();
+    });
     
     // Initialization
-    this.init();
+    this.init().catch(() => this.displayFallback());
   }
 
   async init() {
     if (this.useStaticMobileFallback) {
-      this.canvas.classList.add('hidden');
       this.displayFallback();
       return;
     }
@@ -76,39 +85,42 @@ class WebGLHandler {
     this.setupInteractivity();
 
     // Start rendering loop
-    this.tick();
+    this.requestRender();
   }
 
   displayFallback() {
+    this.renderDisabled = true;
+    cancelAnimationFrame(this.frameId);
+    this.frameId = null;
+    this.canvas.style.visibility = 'hidden';
     if (this.fallbackContainer) {
-      this.fallbackContainer.classList.remove('visual-hide');
-      const img3 = document.getElementById('fallback-img-3');
-      const img4 = document.getElementById('fallback-img-4');
-      
-      // Basic hover/scroll translation on fallback images as progressive enhancement
-      window.addEventListener('scroll', () => {
-        const welcomeEl = document.getElementById('welcome-section');
-        let shouldShowSecondImage = false;
-        
-        if (welcomeEl) {
-          // Trigger transition exactly when the Welcome section scrolls up past the middle of the screen
-          const rect = welcomeEl.getBoundingClientRect();
-          shouldShowSecondImage = rect.bottom < (window.innerHeight * 0.5);
-        } else {
-          // Fallback if section is missing
-          const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
-          shouldShowSecondImage = scrollPercent > 0.35;
-        }
-        
-        if (!shouldShowSecondImage) {
-          img4.classList.remove('hidden');
-          img3.classList.add('hidden');
-        } else {
-          img4.classList.add('hidden');
-          img3.classList.remove('hidden');
-        }
-      });
+      this.fallbackContainer.classList.remove('webgl-fallback-hidden');
+      if (!this.fallbackListenersAdded) {
+        this.fallbackListenersAdded = true;
+        this.fallbackContainer.querySelectorAll('img').forEach(img => {
+          img.addEventListener('load', () => this.updateFallback());
+          img.addEventListener('error', () => this.updateFallback());
+        });
+      }
+      this.updateFallback();
     }
+  }
+
+  updateFallback() {
+    const img3 = document.getElementById('fallback-img-3');
+    const img4 = document.getElementById('fallback-img-4');
+    if (!img3 || !img4) return;
+    const firstReady = img4.complete && img4.naturalWidth > 0;
+    const secondReady = img3.complete && img3.naturalWidth > 0;
+    // Keep whichever loaded layer can cover the viewport; never reveal an empty image element.
+    const showSecond = secondReady && (!firstReady || this.blendValue > 0);
+    img4.classList.toggle('image-layer-hidden', !firstReady || showSecond);
+    img3.classList.toggle('image-layer-hidden', !showSecond);
+  }
+
+  requestRender() {
+    if (this.frameId || this.renderDisabled || !this.texturesReady || document.hidden || this.canvas.classList.contains('visual-layer-hidden')) return;
+    this.frameId = requestAnimationFrame(() => this.tick());
   }
 
   setupShaders() {
@@ -247,23 +259,23 @@ class WebGLHandler {
       this.displayFallback();
     };
     image.onload = () => {
-      gl.bindTexture(gl.TEXTURE_2D, texture);
-      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-      this.textures[key] = texture;
-      this.imagesLoaded[key] = true;
-      if (key === 'image4') {
-        // Fix EXIF rotation bug: browser auto-rotates pixels to portrait, but image.width returns raw landscape!
-        let aspect = (image.naturalWidth || image.width) / (image.naturalHeight || image.height);
-        if (aspect > 1.0) {
-          aspect = 1.0 / aspect; // Force portrait if it's > 1.0
+      if (this.renderDisabled) return;
+      try {
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+        this.textures[key] = texture;
+        this.imagesLoaded[key] = true;
+        if (key === 'image4') {
+          this.imageAspect = image.naturalWidth / image.naturalHeight;
         }
-        this.imageAspect = aspect;
-      }
-      this.updateAspectCorrection();
-      
-      if (this.imagesLoaded['image3'] && this.imagesLoaded['image4']) {
-        this.texturesReady = true;
+        this.updateAspectCorrection();
+        if (this.imagesLoaded.image3 && this.imagesLoaded.image4) {
+          this.texturesReady = true;
+          this.requestRender();
+        }
+      } catch {
+        this.displayFallback();
       }
     };
     image.src = src;
@@ -300,12 +312,17 @@ class WebGLHandler {
     const gl = this.gl;
     if (!gl) return;
 
-    const devicePixelRatio = window.devicePixelRatio || 1;
-    this.canvas.width = Math.round(this.canvas.clientWidth * devicePixelRatio);
-    this.canvas.height = Math.round(this.canvas.clientHeight * devicePixelRatio);
+    if (this.renderDisabled) return;
+    const devicePixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    const width = Math.round(this.canvas.clientWidth * devicePixelRatio);
+    const height = Math.round(this.canvas.clientHeight * devicePixelRatio);
+    if (width === this.canvas.width && height === this.canvas.height) return;
+    this.canvas.width = width;
+    this.canvas.height = height;
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
 
     this.updateAspectCorrection();
+    this.requestRender();
   }
 
   updateAspectCorrection() {
@@ -328,6 +345,7 @@ class WebGLHandler {
           
           this.targetParallax.x = x * 0.018;
           this.targetParallax.y = -y * 0.018;
+          this.requestRender();
         }
       }, true);
     }
@@ -340,6 +358,7 @@ class WebGLHandler {
         
         this.targetParallax.x = x * 0.012;
         this.targetParallax.y = -y * 0.012; // Y coordinates invert in WebGL
+        this.requestRender();
       }
     });
 
@@ -351,8 +370,9 @@ class WebGLHandler {
         
         this.targetParallax.x = x * 0.012;
         this.targetParallax.y = -y * 0.012;
+        this.requestRender();
       }
-    });
+    }, { passive: true });
   }
 
   // Called by main orchestrator to pass updated environmental/scroll params
@@ -361,11 +381,14 @@ class WebGLHandler {
     this.exposure = exposure;
     this.saturation = saturation;
     this.timeTint = tintArray;
+    if (this.renderDisabled) this.updateFallback();
+    else this.requestRender();
   }
 
   tick() {
+    this.frameId = null;
     const gl = this.gl;
-    if (!gl) return;
+    if (!gl || this.renderDisabled || !this.texturesReady || document.hidden || this.canvas.classList.contains('visual-layer-hidden')) return;
 
     // Frame interpolation for smooth spring-like haptic/visual movement
     this.currentParallax.x += (this.targetParallax.x - this.currentParallax.x) * 0.08;
@@ -411,6 +434,9 @@ class WebGLHandler {
     offsetY = isMobile ? -0.1 : 0.0;
 
     gl.uniform2f(gl.getUniformLocation(this.program, "u_texScale"), currentScaleX, currentScaleY);
+    // Parallax must remain within the cropped pixels, never expose transparent edges.
+    const parallaxX = Math.max(-(1 - currentScaleX) / 2, Math.min((1 - currentScaleX) / 2, this.currentParallax.x));
+    const parallaxY = Math.max(-(1 - currentScaleY) / 2, Math.min((1 - currentScaleY) / 2, this.currentParallax.y));
     gl.uniform2f(gl.getUniformLocation(this.program, "u_texOffset"), 0.0, offsetY);
 
     // Set Uniforms
@@ -425,8 +451,8 @@ class WebGLHandler {
     );
     gl.uniform2f(
       gl.getUniformLocation(this.program, "u_parallax"),
-      this.currentParallax.x,
-      this.currentParallax.y
+      parallaxX,
+      parallaxY
     );
 
     // Draw full screen quad
@@ -434,12 +460,11 @@ class WebGLHandler {
 
     if (this.texturesReady && !this.firstFrameRendered) {
       this.firstFrameRendered = true;
-      if (this.fallbackContainer && !this.fallbackContainer.classList.contains('visual-hide')) {
-        this.fallbackContainer.classList.add('visual-hide');
-      }
+      this.canvas.style.visibility = 'visible';
+      this.fallbackContainer?.classList.add('webgl-fallback-hidden');
     }
 
-    requestAnimationFrame(() => this.tick());
+    if (Math.abs(this.targetParallax.x - this.currentParallax.x) > 0.00001 || Math.abs(this.targetParallax.y - this.currentParallax.y) > 0.00001) this.requestRender();
   }
 }
 

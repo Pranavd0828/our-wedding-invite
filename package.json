@@ -1,0 +1,12 @@
+{
+  "name": "our-wedding-invite",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "node tests/invitation.cjs",
+    "preview": "python3 -m http.server 8080 --bind 127.0.0.1 --directory docs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

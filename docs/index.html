@@ -19,7 +19,7 @@
   <link id="favicon" rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'></svg>">
   
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="index.css?v=1.6">
+  <link rel="stylesheet" href="index.css?v=1.7">
 </head>
 <body>
 
@@ -31,8 +31,8 @@
 
   <!-- DOM Fallback Images (Hidden when WebGL is initialized successfully) -->
   <div id="fallback-images-container" class="fallback-container soft-fade-mount phase-1-active">
-    <img id="fallback-img-4" src="./assets/image-4.jpg" class="fallback-image" alt="Prajakta & Pranav watercolor landscape with sunglasses" />
-    <img id="fallback-img-3" src="./assets/image-3.jpg" class="fallback-image hidden" alt="Prajakta & Pranav watercolor landscape warm smile" />
+    <img id="fallback-img-4" src="./assets/image-4.jpg" class="fallback-image" fetchpriority="high" alt="Prajakta & Pranav watercolor landscape with sunglasses" />
+    <img id="fallback-img-3" src="./assets/image-3.jpg" class="fallback-image image-layer-hidden" alt="Prajakta & Pranav watercolor landscape warm smile" />
   </div>
 
   <!-- Custom Circular Cursor Directions Badge -->
@@ -162,7 +162,7 @@
       
       <!-- Full Bleed Right Column Image -->
       <div class="rsvp-full-bleed-image soft-fade-mount">
-        <img src="./assets/rsvp-image.png" alt="Prajakta and Pranav looking elegant" style="width: 100%; height: 100%; object-fit: cover; border-radius: 2px;">
+        <img src="./assets/rsvp-image.jpg" alt="Prajakta and Pranav at the beach" width="941" height="1672" style="width: 100%; height: 100%; object-fit: cover; border-radius: 2px;">
       </div>
 
       <div class="section-inner layout-rsvp">
@@ -181,31 +181,32 @@
             
             <!-- Form Panel -->
             <form id="wedding-rsvp-form" class="rsvp-form" novalidate>
+              <noscript><p>JavaScript is needed to send your RSVP. Please enable it or contact Prajakta or Pranav directly.</p></noscript>
               
               <!-- Honeypot Field for Spam Bots -->
-            <input type="text" name="website" id="hp-website" tabindex="-1" autocomplete="off" style="position: absolute; left: -9999px; opacity: 0; pointer-events: none;" />
+            <input type="text" name="website" id="hp-website" aria-hidden="true" tabindex="-1" autocomplete="off" style="position: absolute; left: -9999px; opacity: 0; pointer-events: none;" />
 
             <!-- Group: Full Name -->
             <div class="form-group">
                 <label for="guest-fullname" class="input-label">FULL NAME</label>
                 <div class="textbox-wrapper">
-                  <input type="text" id="guest-fullname" name="fullname" class="textbox-input" placeholder="e.g. PRANAV DEO" required>
+                  <input type="text" id="guest-fullname" name="fullname" class="textbox-input" placeholder="e.g. PRANAV DEO" autocomplete="name" maxlength="100" aria-describedby="name-error" required>
                   <span class="textbox-line"></span>
                 </div>
-                <span class="field-error-message" id="name-error">Your name is required to paint you into our story.</span>
+                <span class="field-error-message" id="name-error">Please enter your name (2 to 100 characters).</span>
               </div>
 
               <!-- Attendance Segmented Toggle -->
               <div class="form-group">
-                <label class="input-label">WILL YOU ATTEND?</label>
-                <div class="segmented-toggle">
-                  <input type="radio" id="rsvp-accept" name="attendance" value="accept" required>
+                <span class="input-label" id="attendance-label">WILL YOU ATTEND?</span>
+                <div class="segmented-toggle" role="radiogroup" aria-labelledby="attendance-label" aria-describedby="attendance-error">
+                  <input type="radio" id="rsvp-accept" name="attendance" value="accept" aria-describedby="attendance-error" required>
                   <label for="rsvp-accept" class="toggle-label">
                     <span class="toggle-circle"></span>
                     JOYFULLY ACCEPTS
                   </label>
 
-                  <input type="radio" id="rsvp-decline" name="attendance" value="decline">
+                  <input type="radio" id="rsvp-decline" name="attendance" value="decline" aria-describedby="attendance-error">
                   <label for="rsvp-decline" class="toggle-label">
                     <span class="toggle-circle"></span>
                     REGRETFULLY DECLINES
@@ -215,26 +216,26 @@
               </div>
 
               <!-- Secondary Expanding Fields -->
-              <div class="rsvp-expanded-fields" id="expanded-details-container">
+              <div class="rsvp-expanded-fields" id="expanded-details-container" inert aria-hidden="true">
                 <div class="expanded-inner">
                   
                   <!-- Guest Count Segmented Toggle -->
                   <div class="form-group">
-                    <label class="input-label">NUMBER OF GUESTS ATTENDING</label>
-                    <div class="segmented-toggle segmented-three">
-                      <input type="radio" id="guest-just-me" name="guest_type" value="just_me" required>
+                    <span class="input-label" id="guest-type-label">NUMBER OF GUESTS ATTENDING</span>
+                    <div class="segmented-toggle segmented-three" role="radiogroup" aria-labelledby="guest-type-label" aria-describedby="guest-type-error">
+                      <input type="radio" id="guest-just-me" name="guest_type" value="just_me" aria-describedby="guest-type-error" disabled>
                       <label for="guest-just-me" class="toggle-label">
                         <span class="toggle-circle"></span>
                         JUST ME
                       </label>
 
-                      <input type="radio" id="guest-plus-one" name="guest_type" value="plus_one">
+                      <input type="radio" id="guest-plus-one" name="guest_type" value="plus_one" aria-describedby="guest-type-error" disabled>
                       <label for="guest-plus-one" class="toggle-label">
                         <span class="toggle-circle"></span>
                         PLUS ONE
                       </label>
 
-                      <input type="radio" id="guest-family" name="guest_type" value="family">
+                      <input type="radio" id="guest-family" name="guest_type" value="family" aria-describedby="guest-type-error" disabled>
                       <label for="guest-family" class="toggle-label">
                         <span class="toggle-circle"></span>
                         FAMILY
@@ -247,25 +248,26 @@
                   <div class="form-group conditional-family hidden" id="family-count-container">
                     <label for="family-guest-count" class="input-label">HOW MANY GUESTS TOTAL?</label>
                     <div class="textbox-wrapper">
-                      <input type="number" id="family-guest-count" name="family_count" class="textbox-input" placeholder="e.g. 4" min="3" max="15" inputmode="numeric" pattern="[0-9]*">
+                      <input type="number" id="family-guest-count" name="family_count" class="textbox-input" placeholder="e.g. 4" min="3" max="15" step="1" inputmode="numeric" aria-describedby="family-count-error" disabled>
                       <span class="textbox-line"></span>
                     </div>
-                    <span class="field-error-message" id="family-count-error">Please enter a valid guest count.</span>
+                    <span class="field-error-message" id="family-count-error">Please enter a whole number from 3 to 15, including yourself.</span>
                   </div>
 
                 </div>
               </div>
 
               <!-- Submit Button -->
-              <button type="submit" id="rsvp-submit-btn" class="btn-submit">
+              <button type="submit" id="rsvp-submit-btn" class="btn-submit" disabled>
                 <span class="btn-text">CONFIRM ATTENDANCE</span>
                 <span class="btn-watercolor-bleed"></span>
               </button>
 
             </form>
+            <p id="rsvp-status" class="submission-status hidden" role="alert" tabindex="-1"></p>
 
             <!-- Success State Panel (Initially Hidden) -->
-            <div class="rsvp-success-panel hidden" id="rsvp-success-panel">
+            <div class="rsvp-success-panel hidden" id="rsvp-success-panel" role="region" aria-labelledby="success-title" tabindex="-1">
               <div class="split-side split-left"></div>
               <div class="split-side split-right"></div>
               <div class="success-message-card">
@@ -286,14 +288,14 @@
   </main>
 
   <!-- External Libraries -->
-  <script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/3.4.2/gl-matrix-min.js"></script>
+  <script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js" data-smooth-scroll async></script>
   
   <!-- Application Logic -->
   <script>
     // Initialize the agent at application startup.
     const fpPromise = import('https://openfpcdn.io/fingerprintjs/v4')
-      .then(FingerprintJS => FingerprintJS.load());
+      .then(FingerprintJS => FingerprintJS.load())
+      .catch(() => null);
   </script>
   <script src="webgl-handler.js"></script>
 

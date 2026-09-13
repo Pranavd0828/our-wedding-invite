@@ -221,14 +221,13 @@ body.night-mode .paper-overlay {
   will-change: transform, opacity;
 }
 
-.fallback-image.hidden {
+.fallback-image.image-layer-hidden {
   opacity: 0;
 }
 
-@media (max-width: 767px) {
-  .fallback-image.hidden {
-    display: block !important;
-  }
+.fallback-container.webgl-fallback-hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* ==========================================================================
@@ -302,15 +301,20 @@ body.night-mode .paper-overlay {
 
 .section-inner {
   width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
   max-width: 1200px;
   margin: 0 auto;
   position: relative;
   z-index: 2;
+  transition: opacity 1.0s cubic-bezier(0.25, 1, 0.5, 1), transform 1.0s cubic-bezier(0.25, 1, 0.5, 1), filter 1.0s ease;
+  will-change: opacity, transform, filter;
+}
+
+.scroll-enhanced .section-inner {
   opacity: 0.3;
   transform: scale(0.98);
   filter: blur(4px);
-  transition: opacity 1.0s cubic-bezier(0.25, 1, 0.5, 1), transform 1.0s cubic-bezier(0.25, 1, 0.5, 1), filter 1.0s ease;
-  will-change: opacity, transform, filter;
 }
 
 .scroll-section.active-phase .section-inner {
@@ -438,7 +442,7 @@ body.night-mode .paper-overlay {
 
 @media (min-width: 1025px) {
   .layout-details {
-    padding-right: 45vw; /* Match the 1.2fr grid ratio of the first section */
+    padding-right: min(45vw, 650px);
   }
 }
 
@@ -672,7 +676,7 @@ body.night-mode .paper-overlay {
 
 @media (min-width: 1025px) {
   .layout-rsvp {
-    padding-right: 45vw; /* Match the 1.2fr grid ratio of the first section */
+    padding-right: min(45vw, 650px);
   }
 }
 
@@ -700,9 +704,9 @@ body.night-mode .paper-overlay {
   overflow: hidden;
 }
 
-.scroll-section.active-phase .rsvp-full-bleed-image {
+.rsvp-full-bleed-image.image-phase-active {
   opacity: 1;
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .venue-image-bg {
@@ -970,6 +974,8 @@ body.night-mode .paper-overlay {
   letter-spacing: 0.05em;
   color: var(--ink-charcoal);
   transition: var(--transition-fast);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .toggle-label:hover {
@@ -978,6 +984,7 @@ body.night-mode .paper-overlay {
 }
 
 .toggle-circle {
+  flex-shrink: 0;
   width: 16px;
   height: 16px;
   border-radius: 50%;
@@ -1013,6 +1020,14 @@ body.night-mode .paper-overlay {
   transform: translate(-50%, -50%) scale(1);
 }
 
+.segmented-toggle input[type="radio"]:focus-visible + .toggle-label,
+.textbox-input:focus-visible,
+.btn-submit:focus-visible,
+.address-link:focus-visible {
+  outline: 2px solid var(--leaf-olive);
+  outline-offset: 3px;
+}
+
 /* Secondary Expanding Layout (Dynamic Height Interpolation) */
 .rsvp-expanded-fields {
   display: grid;
@@ -1025,6 +1040,7 @@ body.night-mode .paper-overlay {
 }
 
 .expanded-inner {
+  min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -1146,6 +1162,8 @@ body.night-mode .paper-overlay {
 .btn-submit {
   position: relative;
   padding: 1.25rem 2rem;
+  padding-inline: min(2rem, 8%);
+  overflow-wrap: anywhere;
   background-color: var(--leaf-olive);
   color: var(--canvas-base);
   border: none;
@@ -1235,11 +1253,11 @@ body.night-mode .paper-overlay {
 
 /* Success panel / split container */
 .rsvp-success-panel {
-  position: absolute;
+  position: relative;
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
+  height: auto;
   z-index: 5;
   display: flex;
   align-items: center;
@@ -1273,7 +1291,8 @@ body.night-mode .paper-overlay {
   z-index: 2;
   width: 100%;
   max-width: 420px;
-  padding: 2.5rem;
+  padding: 2.5rem min(2.5rem, 5%);
+  overflow-wrap: anywhere;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -1336,6 +1355,12 @@ body.night-mode .paper-overlay {
   color: var(--leaf-olive);
 }
 
+.submission-status {
+  margin-top: 1rem;
+  color: var(--validation-amber);
+  line-height: 1.5;
+}
+
 /* ==========================================================================
    AUDIO WIDGET STYLING
    ========================================================================== */
@@ -1346,6 +1371,11 @@ body.night-mode .paper-overlay {
    ========================================================================== */
 
 @media (prefers-reduced-motion: reduce) {
+  .scroll-enhanced .section-inner {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
   *, ::before, ::after {
     animation-delay: -1ms !important;
     animation-duration: 1ms !important;
