@@ -1,53 +1,70 @@
-# Prajakta weds Pranav
+# Prajakta & Pranav: Our Forever Begins
 
-A static wedding invitation and RSVP site for December 11-12, 2026, at Sorina Hillside Resort, Pune.
+A mobile-first wedding invitation for December 11 and 12, 2026, at Sorina Hillside Resort, Pune.
 
-Live site: https://pranavd0828.github.io/our-wedding-invite/
+Public site: [GitHub Pages](https://pranavd0828.github.io/our-wedding-invite/).
 
-## Project structure
+## Experience
 
-- `docs/`: the public GitHub Pages site, including HTML, CSS, JavaScript and image assets.
-- `docs/app.js`: scroll state, section transitions and optional Lenis smooth scrolling.
-- `docs/webgl-handler.js`: desktop image rendering, with DOM image fallbacks on phones, tablets, reduced-motion settings or WebGL failure.
-- `docs/form-handler.js`: conditional RSVP questions, client validation, submission and confirmation.
-- `tests/invitation.cjs`: browser regression checks. Every RSVP request is intercepted; test guests never reach the live sheet.
+The homepage combines the Gateway of India, Pune, the Western Ghats, vada pav, bun maska, and cutting chai in custom watercolor artwork. A separate portrait-oriented composition keeps both cities visible on phones. The page continues through a text-only introduction, the celebrations, the venue, and RSVP. Couple photographs are not displayed or used in the link preview.
 
-There is no build step, audio player or interactive map. The venue address links to Google Maps. GitHub Pages should publish `main` / `docs`, with no custom domain required.
+Mobile has a fixed RSVP action bar with safe-area padding. The bar hides during text entry so it does not compete with the software keyboard. Desktop has a sticky navigation header. Sections remain in normal document flow: no WebGL, scroll-triggered background crossfades, Lenis, or particle overlays.
 
-## Local preview
+The venue section is text-only. The Google Maps link and event information are retained from the previous invitation.
 
-Serve the site over HTTP so WebGL textures work:
+Headings use locally hosted Cormorant Garamond with serif fallbacks. Its open font license is included with the assets. Body text uses system fonts.
+
+## Files And Hosting
+
+- `docs/index.html`: invitation content, navigation, and accessible RSVP markup.
+- `docs/index.css`: responsive layout and reduced-motion behavior.
+- `docs/app.js`: form initialization, optional fingerprint initialization, and keyboard-aware mobile action bar.
+- `docs/form-handler.js`: conditional questions, validation, timeout, retry identity, and submission.
+- `docs/assets/`: locally served images, fonts, and Lucide icons, including font and icon licenses.
+- `tests/invitation.cjs`: browser regression suite with intercepted RSVP requests.
+
+There is no build step. GitHub Pages should publish the `docs` directory. The HTML can be opened locally for a visual preview. For an HTTP preview, run:
 
 ```sh
 python3 -m http.server 8080 --bind 127.0.0.1 --directory docs
 ```
 
-Open http://127.0.0.1:8080. An occupied port can be replaced with another number.
+Use another port if 8080 is occupied. The Pages URL only changes after these files are committed, pushed, and deployed; a local preview is not a production deployment.
 
-## Browser tests
+## RSVP And Spreadsheet Compatibility
 
-Use a supported Node.js LTS release:
+The existing Google Apps Script endpoint and payload keys are unchanged: `fullName`, `attendance`, `guestType`, `totalGuests`, `timestamp`, `submissionId`, `hp`, and `visitorId`.
+
+The redesign does not publish, upload, or read guest spreadsheets. Responses continue through the existing Google Sheets integration. No local Excel file acts as a public database.
+
+The form locks before asynchronous work, validates whole-number family totals of 3 through 15, and gives the full network request and JSON parsing a ten-second deadline. The optional fingerprint lookup retains its 1.5-second limit and falls back to `unknown`. The external fingerprint script remains for compatibility with the existing integration; it is not needed for visual rendering or a successful submission.
+
+An unchanged uncertain request reuses its submission ID in the same tab when session storage is available. Changed answers create a new ID. Success clears the pending ID. This is retry protection, not one-response-per-person enforcement. A timeout does not prove that the spreadsheet write failed. Server schema validation, formula handling, rate limits, deployment permissions, and deduplication remain responsibilities of the separately deployed backend.
+
+Missing form code leaves visible recovery guidance and a disabled submit button. A confirmed response shows the success message immediately, without waiting for an animation.
+
+## Verification
+
+Use Node.js 20 or later:
 
 ```sh
 npm ci
-npx playwright install chromium
+npx playwright install chromium webkit
 npm test
+TEST_BROWSER=webkit npm test
 ```
 
-For the WebKit engine, install it with `npx playwright install webkit` and run `TEST_BROWSER=webkit npm test`. `BROWSER_EXECUTABLE` can select an installed browser executable; `TEST_OUTPUT_DIR` enables screenshots and a JSON results file. These checks emulate screen sizes and browser behavior; they do not replace a physical iPhone/Safari check for toolbar resizing, the software keyboard or GPU flicker.
+Optional environment variables:
 
-## RSVP behavior
+- `BROWSER_EXECUTABLE`: use an installed browser executable.
+- `TEST_OUTPUT_DIR`: save screenshots and machine-readable results outside the repository.
+- `TEST_FILTER`: run matching test names only.
+- `AXE_SCRIPT`: path to a local axe-core script to include an automated accessibility scan.
 
-The form locks before asynchronous work and gives the full request, including reading JSON, a ten-second deadline. Optional fingerprint lookup has a separate 1.5-second limit. An unchanged retry reuses its submission ID, including after reload in the same tab where session storage is available. Changing answers creates a new submission. A timeout does not prove that the server failed to save the response.
+The suite covers mobile, tablet, landscape, and desktop layouts; artwork and font loading; page references; sticky RSVP navigation; focus behavior; enlarged text; reduced motion; failed scripts; offline responses; retry identity; damaged retry records; repeated taps; numeric conversion; conditional fields; and confirmation. Every RSVP request is mocked. Tests do not create live guest records or verify the deployed Apps Script source. Physical-phone checks are still needed for real software keyboards, browser chrome, and assistive technologies.
 
-The payload retains `fullName`, `attendance`, `guestType`, `totalGuests`, `timestamp`, `submissionId`, `hp` and `visitorId`. The client validates the name and whole-number family counts, but client validation is not a security boundary.
+## Privacy
 
-## Backend and privacy
+This is a public repository. Publishing only `docs` does not hide other committed files from GitHub. The local private backup folder, planning folders, separate relatives invitation, and recording are explicitly ignored. Keep guest lists, credentials, and backend administration files outside the public source wherever possible, and review staged files before committing.
 
-The deployed Google Apps Script and spreadsheet are maintained separately and are not in this repository. Client tests cannot establish whether the live backend enforces schema validation, formula safety, locking, rate limits or idempotency. Verify those rules in the deployed script, especially that deduplication uses `submissionId` and does not prevent different guests sharing one device from replying.
-
-The web-app endpoint is necessarily public in the browser. The honeypot and fingerprint are not authentication or complete spam protection. FingerprintJS loads third-party code and supplies a device identifier; its availability is optional for submission. Lenis is also optional. The unused gl-matrix dependency has been removed.
-
-Session storage retains a pending submission signature and ID in the guest's tab until confirmed success; storage failures fall back to an in-memory ID. The served RSVP JPEG is about 260KB. The original PNG and previous artwork remain tracked, but are not requested by the page.
-
-The repository itself is public. Publishing only `docs/` limits the website's files, not what is visible through GitHub or Git history. Keep private backend files, guest lists, credentials and raw personal documents outside the repository.
+Existing unused artwork remains available locally and in Git history. The new homepage uses optimized WebP artwork of approximately 115 KB on phones and 200 KB on desktops.

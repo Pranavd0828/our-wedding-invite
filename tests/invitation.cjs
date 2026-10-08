@@ -6,7 +6,7 @@ const { chromium, webkit } = require('playwright');
 
 const root = path.resolve(__dirname, '../docs');
 const output = process.env.TEST_OUTPUT_DIR;
-const type = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.png': 'image/png', '.jpg': 'image/jpeg' };
+const type = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.woff2': 'font/woff2' };
 let slowBodyStarted = false;
 const server = createServer(async (req, res) => {
   try {
@@ -101,7 +101,9 @@ const server = createServer(async (req, res) => {
           await page.locator('label[for="rsvp-decline"]').click();
           assert.equal(await page.locator('#guest-just-me').isEnabled(), false);
           await page.locator('label[for="rsvp-accept"]').click();
-          assert.ok(await page.locator('#expanded-details-container').evaluate(e => e.clientHeight > 100));
+          assert.equal(await page.locator('#expanded-details-container').isVisible(), true);
+          assert.equal(await page.locator('#expanded-details-container').evaluate(e => e.inert), false);
+          assert.equal(await page.locator('#guest-just-me').isEnabled(), true);
           assert.equal(await page.locator('#family-guest-count').isEnabled(), guest === 'family');
         }
       } finally { await context.close(); }
@@ -129,7 +131,31 @@ const server = createServer(async (req, res) => {
       } finally { await context.close(); }
     });
 
-    await test('Repeated submits during fingerprinting send exactly one request', async () => {
+    await test('Scientific notation preserves the validated family total', async () => {
+      const { page, context, posts } = await fixture();
+      try {
+        await page.goto(base); await fill(page, 'accept', 'family');
+        await page.locator('#family-guest-count').fill('1e1');
+        await page.locator('#rsvp-submit-btn').click(); await success(page);
+        assert.equal(posts[0].totalGuests, 10);
+      } finally { await context.close(); }
+    });
+
+    await test('Damaged retry records are replaced before submission', async () => {
+      const { page, context, posts } = await fixture();
+      try {
+        await page.addInitScript(() => sessionStorage.setItem('rsvp-pending', JSON.stringify({
+          signature: JSON.stringify({fullName:'Local Test Guest',attendance:'decline',guestType:null,totalGuests:0,hp:''}),
+          submissionId: '', timestamp: 'invalid'
+        })));
+        await page.goto(base); await fill(page, 'decline');
+        await page.locator('#rsvp-submit-btn').click(); await success(page);
+        assert.ok(posts[0].submissionId.length > 0);
+        assert.ok(Number.isFinite(Date.parse(posts[0].timestamp)));
+      } finally { await context.close(); }
+    });
+
+    await test('Repeated submits send exactly one request', async () => {
       const { page, context, posts } = await fixture();
       try {
         await page.goto(base); await fill(page);
@@ -233,169 +259,181 @@ const server = createServer(async (req, res) => {
     }
 
     for (const [width, height] of [[320,568], [390,844], [430,932], [480,800], [768,1024], [844,390], [1024,768], [1440,900], [2560,1440]]) {
-      await test(`Layout and images at ${width}x${height}`, async () => {
+      await test(`Invitation layout, images and controls at ${width}x${height}`, async () => {
         const { page, context, errors } = await fixture({ context: { viewport: { width, height }, reducedMotion: 'no-preference', isMobile: width <= 1024 } });
         try {
           await page.goto(base);
-          for (const section of ['welcome-section', 'details-section', 'map-section', 'rsvp-section']) {
+          for (const section of ['welcome-section', 'story-title', 'details-section', 'map-section', 'rsvp-section']) {
             await page.locator('#' + section).scrollIntoViewIfNeeded();
-            await page.waitForTimeout(1100);
+            await page.waitForTimeout(250);
             assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
-            if (section === 'rsvp-section') {
-              assert.ok(await page.locator('.rsvp-form-col').evaluate(e => e.clientWidth >= 270));
-              if (width <= 1024) {
-                const covers = await page.locator('#rsvp-section .rsvp-full-bleed-image').evaluate(e => {
-                  const r = e.getBoundingClientRect();
-                  return r.x <= 0 && r.y <= 0 && r.right >= innerWidth && r.bottom >= innerHeight && getComputedStyle(e).opacity === '1';
-                });
-                assert.equal(covers, true, 'Mobile background must cover the viewport');
-              }
-            }
-            if (output && [390,1440,2560].includes(width)) await page.screenshot({ path: path.join(output, `${section}-${width}.png`) });
           }
+          await page.waitForFunction(() => [...document.images].every(image => image.complete && image.naturalWidth > 0));
+          assert.equal(await page.locator('canvas').count(), 0, 'There must be no cross-fading canvas backgrounds');
           await fill(page, 'accept', 'family');
-          const overflow = await page.locator('.rsvp-form-col').evaluate(e => [...e.querySelectorAll('h2,.toggle-label,.btn-submit')].filter(el => el.scrollWidth > el.clientWidth + 1).map(el => el.textContent.trim()));
-          assert.deepEqual(overflow, []);
+          const clipped = await page.locator('#rsvp-section').evaluate(e => [...e.querySelectorAll('h2,.toggle-label,.btn-submit')].filter(el => el.scrollWidth > el.clientWidth + 1).map(el => el.textContent.trim()));
+          assert.deepEqual(clipped, []);
+          await page.locator('#family-guest-count').blur();
+          await page.locator('#rsvp-submit-btn').click();
+          await success(page);
           assert.deepEqual(errors, []);
+          if (output) {
+            await page.evaluate(() => window.scrollTo({top:0,behavior:'instant'}));
+            await page.screenshot({path:path.join(output,`hero-${width}.png`)});
+            await page.screenshot({path:path.join(output,`full-${width}.png`),fullPage:true});
+          }
         } finally { await context.close(); }
       });
     }
 
-    await test('A missing visual module does not disable the form', async () => {
-      const { page, context } = await fixture();
-      try {
-        await page.route('**/webgl-handler.js', route => route.abort());
-        await page.goto(base); await fill(page); await page.locator('#rsvp-submit-btn').click(); await success(page);
-      } finally { await context.close(); }
-    });
-
-    await test('JavaScript disabled leaves readable content and cannot send a native GET', async () => {
-      const { page, context } = await fixture({ context: { javaScriptEnabled: false } });
+    await test('Mobile RSVP bar reaches the form and clears typing fields', async () => {
+      const {page, context} = await fixture();
       try {
         await page.goto(base);
-        assert.equal(await page.locator('.section-inner').first().evaluate(e => getComputedStyle(e).filter), 'none');
-        assert.equal(await page.locator('#rsvp-submit-btn').isEnabled(), false);
-        assert.equal(await page.locator('noscript').isVisible(), true);
-      } finally { await context.close(); }
-    });
-
-    await test('Reduced motion skips WebGL, smooth scrolling and success particles', async () => {
-      const { page, context } = await fixture();
-      try {
-        await page.goto(base);
-        assert.equal(await page.evaluate(() => Boolean(AppInstance.lenis || AppInstance.webgl.gl)), false);
-        await fill(page); await page.locator('#rsvp-submit-btn').click(); await success(page);
-        assert.equal(await page.locator('.rsvp-card canvas').count(), 0);
-      } finally { await context.close(); }
-    });
-
-    await test('WebGL failure and context loss retain an image and stop rendering', async () => {
-      const { page, context } = await fixture({ context: { viewport: { width: 1440, height: 900 }, isMobile: false, reducedMotion: 'no-preference' } });
-      try {
-        await page.goto(base);
-        await page.waitForFunction(() => AppInstance.webgl.firstFrameRendered || AppInstance.webgl.renderDisabled);
-        const hadWebGL = await page.evaluate(() => Boolean(AppInstance.webgl.gl));
-        if (hadWebGL) {
-          const pixels = await page.evaluate(() => {
-            const handler = AppInstance.webgl; handler.tick(); const gl = handler.gl;
-            const pixel = new Uint8Array(4); gl.readPixels(Math.floor(gl.drawingBufferWidth / 2), Math.floor(gl.drawingBufferHeight / 2), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
-            return [...pixel];
-          });
-          assert.ok(pixels[3] > 0 && pixels.slice(0,3).some(value => value > 0), 'Canvas must render actual pixels');
-          await page.evaluate(() => AppInstance.webgl.gl.getExtension('WEBGL_lose_context')?.loseContext());
-        } else {
-          await page.evaluate(() => AppInstance.webgl.displayFallback());
-        }
-        await page.waitForFunction(() => AppInstance.webgl.renderDisabled);
-        await page.waitForTimeout(650);
-        assert.equal(await page.locator('#webgl-canvas').evaluate(e => getComputedStyle(e).visibility), 'hidden');
-        assert.equal(await page.locator('#fallback-images-container').evaluate(e => getComputedStyle(e).opacity), '1');
-      } finally { await context.close(); }
-    });
-
-    await test('Failed venue or RSVP image keeps the previous loaded background', async () => {
-      const { page, context } = await fixture();
-      try {
-        await page.route('**/assets/venue-new-bg.jpg', route => route.abort());
-        await page.route('**/assets/rsvp-image.jpg', route => route.abort());
-        await page.goto(base); await page.locator('#rsvp-section').scrollIntoViewIfNeeded();
-        await page.waitForTimeout(100);
-        assert.equal(await page.locator('#fallback-images-container').evaluate(e => getComputedStyle(e).opacity), '1');
-        assert.equal(await page.locator('.image-phase-active').count(), 0);
-      } finally { await context.close(); }
-    });
-
-    await test('Rapid first/second scrolls always retain an opaque image', async () => {
-      const { page, context } = await fixture({ context: { reducedMotion: 'no-preference' } });
-      try {
-        await page.goto(base);
-        await page.waitForFunction(() => [...document.querySelectorAll('.fallback-image')].every(img => img.complete && img.naturalWidth > 0));
-        const stable = await page.evaluate(async () => {
-          const threshold = document.querySelector('#welcome-section').offsetHeight - innerHeight * 0.5;
-          for (let i = 0; i < 30; i++) {
-            window.scrollTo(0, threshold + (i % 2 ? 90 : -90));
-            await new Promise(requestAnimationFrame);
-            const image = document.querySelector('#fallback-img-4');
-            if (getComputedStyle(image).opacity !== '1' || getComputedStyle(image).display === 'none') return false;
-          }
-          return true;
+        await page.locator('.mobile-rsvp-bar a').click();
+        await page.waitForFunction(() => {
+          const r=document.querySelector('#rsvp-section').getBoundingClientRect();
+          return r.top >= 0 && r.top < innerHeight;
         });
-        assert.equal(stable, true);
+        await page.locator('#guest-fullname').focus();
+        assert.equal(await page.locator('.mobile-rsvp-bar').evaluate(e=>getComputedStyle(e).visibility), 'hidden');
+        await page.locator('#guest-fullname').blur();
+        await page.waitForFunction(()=>getComputedStyle(document.querySelector('.mobile-rsvp-bar')).visibility==='visible');
+      } finally {await context.close();}
+    });
+
+    await test('Page references, local fonts and links are valid', async () => {
+      const { page, context } = await fixture();
+      const failed = [];
+      page.on('response', response => {
+        if (response.url().startsWith(base) && response.status() >= 400) failed.push(response.url());
+      });
+      try {
+        await page.goto(base);
+        await page.evaluate(() => document.fonts.ready);
+        const issues = await page.evaluate(() => {
+          const ids = [...document.querySelectorAll('[id]')].map(e => e.id);
+          const duplicateIds = ids.filter((id, index) => ids.indexOf(id) !== index);
+          const missing = [...document.querySelectorAll('a[href^="#"]')].filter(a => !document.getElementById(a.hash.slice(1))).map(a => a.hash);
+          const labels = [...document.querySelectorAll('[aria-labelledby], [aria-describedby]')].flatMap(e =>
+            `${e.getAttribute('aria-labelledby') || ''} ${e.getAttribute('aria-describedby') || ''}`.trim().split(/\s+/).filter(id => id && !document.getElementById(id)));
+          const fonts = [...document.fonts].filter(f => f.family.includes('Cormorant')).map(f => f.status);
+          return { duplicateIds, missing, labels, fonts };
+        });
+        assert.deepEqual(issues, {duplicateIds: [], missing: [], labels: [], fonts: ['loaded', 'loaded']});
+        assert.deepEqual(failed, []);
       } finally { await context.close(); }
+    });
+
+    await test('A missing initializer leaves a disabled form and recovery guidance', async () => {
+      const { page, context } = await fixture();
+      try {
+        await page.route('**/app.js*', route => route.abort());
+        await page.goto(base);
+        assert.equal(await page.locator('#rsvp-submit-btn').isDisabled(), true);
+        assert.equal(await page.locator('#rsvp-loading').isVisible(), true);
+        await page.locator('#guest-fullname').fill('Local Test Guest');
+        await page.locator('#guest-fullname').press('Enter');
+        assert.equal(page.url(), base + '/');
+      } finally { await context.close(); }
+    });
+
+    await test('A missing form module has visible recovery guidance', async () => {
+      const {page, context} = await fixture();
+      try {
+        await page.route('**/form-handler.js*', route=>route.abort());
+        await page.goto(base);
+        assert.equal(await page.locator('#rsvp-submit-btn').isDisabled(), true);
+        assert.equal(await page.locator('#rsvp-loading').isVisible(), true);
+        assert.match(await page.locator('#rsvp-loading').textContent(), /refresh/i);
+      } finally {await context.close();}
+    });
+
+    await test('JavaScript disabled retains readable content and prevents a native GET', async () => {
+      const {page, context} = await fixture({context:{javaScriptEnabled:false}});
+      try {
+        await page.goto(base);
+        assert.equal(await page.locator('h1').isVisible(),true);
+        assert.equal(await page.locator('#rsvp-submit-btn').isDisabled(),true);
+        assert.equal(await page.locator('noscript').isVisible(),true);
+        await page.locator('#guest-fullname').fill('Local Test Guest');
+        await page.locator('#guest-fullname').press('Enter');
+        assert.equal(page.url(),base+'/');
+      } finally {await context.close();}
+    });
+
+    await test('Failed artwork does not hide invitation text or stop RSVP', async () => {
+      const {page,context,errors} = await fixture();
+      try {
+        await page.route('**/assets/**',route=>route.abort());
+        await page.goto(base);
+        assert.equal(await page.locator('h1').isVisible(),true);
+        await fill(page,'decline');
+        await page.locator('#rsvp-submit-btn').click();
+        await success(page);
+        assert.deepEqual(errors,[]);
+      } finally {await context.close();}
+    });
+
+    await test('The invitation has no third-party animation dependency', async () => {
+      const {page,context} = await fixture();
+      const external=[];
+      page.on('request',r=>{const url=new URL(r.url());if(url.origin!==base && url.hostname!=='openfpcdn.io')external.push(r.url());});
+      try {
+        await page.goto(base);
+        await page.waitForTimeout(150);
+        assert.deepEqual(external,[]);
+      } finally {await context.close();}
+    });
+
+    await test('Reduced motion uses native immediate scrolling and confirmation', async () => {
+      const {page,context} = await fixture();
+      try {
+        await page.goto(base);
+        assert.equal(await page.evaluate(()=>getComputedStyle(document.documentElement).scrollBehavior),'auto');
+        await fill(page);
+        await page.locator('#rsvp-submit-btn').click();
+        await success(page);
+        assert.equal(await page.locator('canvas').count(),0);
+      } finally {await context.close();}
     });
 
     await test('Text at 200 percent remains usable on a small phone', async () => {
-      const { page, context } = await fixture({ context: { viewport: { width: 320, height: 568 } } });
+      const {page,context} = await fixture({context:{viewport:{width:320,height:568}}});
       try {
         await page.goto(base);
-        await page.addStyleTag({ content: 'html { font-size: 200%; }' });
-        const clipped = await page.locator('#rsvp-section').evaluate(e => [...e.querySelectorAll('h2,.btn-submit,.toggle-label')].filter(el => el.scrollWidth > el.clientWidth + 1).map(el => el.textContent.trim()));
-        assert.deepEqual(clipped, [], 'Large text must fit in controls, not just the page');
-        await fill(page, 'decline'); await page.locator('#rsvp-submit-btn').click(); await success(page);
-        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
-        if (output) await page.screenshot({path:path.join(output, 'text-200-percent.png')});
-      } finally { await context.close(); }
+        await page.addStyleTag({content:'html { font-size: 200%; }'});
+        const clipped=await page.evaluate(()=>[...document.querySelectorAll('h1,h2,h3,.toggle-label,.btn-submit,.mobile-rsvp-bar')].filter(e=>e.scrollWidth>e.clientWidth+1).map(e=>e.textContent.trim()));
+        assert.deepEqual(clipped,[]);
+        assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+        await fill(page,'decline');await page.locator('#rsvp-submit-btn').click();await success(page);
+        assert.ok(await page.evaluate(()=>document.querySelector('#success-title').getBoundingClientRect().top >= document.querySelector('.site-header').getBoundingClientRect().bottom), 'The confirmation heading must not hide behind navigation');
+        if(output)await page.screenshot({path:path.join(output,'text-200-percent.png')});
+      } finally {await context.close();}
     });
 
-    await test('Keyboard focus is visible and skips collapsed guest questions', async () => {
-      const { page, context } = await fixture();
+    await test('Radio focus is visible and arrow keys change attendance', async () => {
+      const {page,context} = await fixture();
       try {
         await page.goto(base);
-        await page.locator('#guest-fullname').focus();
-        await page.keyboard.press('Tab');
-        assert.equal(await page.evaluate(() => document.activeElement.id), 'rsvp-accept');
-        assert.equal(await page.locator('label[for="rsvp-accept"]').evaluate(e => getComputedStyle(e).outlineStyle), 'solid');
-        await page.keyboard.press('Tab');
-        assert.equal(await page.evaluate(() => document.activeElement.id), 'rsvp-submit-btn');
-      } finally { await context.close(); }
+        await page.locator('#rsvp-accept').focus();
+        await page.keyboard.press('ArrowRight');
+        assert.equal(await page.locator('#rsvp-decline').isChecked(),true);
+        assert.equal(await page.locator('label[for="rsvp-decline"]').evaluate(e=>getComputedStyle(e).outlineStyle),'solid');
+        assert.equal(await page.locator('#guest-just-me').isDisabled(),true);
+      } finally {await context.close();}
     });
 
-    if (process.env.AXE_SCRIPT) await test('Automated accessibility scan across all sections and expanded RSVP', async () => {
-      const { page, context } = await fixture();
+    if (process.env.AXE_SCRIPT) await test('Accessibility scan of the full invitation and expanded form', async () => {
+      const {page,context} = await fixture();
       try {
         await page.goto(base);
-        await page.addScriptTag({ path: process.env.AXE_SCRIPT });
-        const violations = [];
-        for (const section of ['welcome-section', 'details-section', 'map-section', 'rsvp-section']) {
-          await page.locator('#' + section).scrollIntoViewIfNeeded();
-          if (section === 'rsvp-section') await fill(page, 'accept', 'family');
-          const result = await page.evaluate(async selector => (await axe.run(selector, {runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa']}})).violations, '#' + section);
-          violations.push(...result.map(item => ({rule:item.id,impact:item.impact,nodes:item.nodes.map(node=>({target:node.target,summary:node.failureSummary}))})));
-        }
-        if (output) await fs.writeFile(path.join(output, 'accessibility.json'), JSON.stringify(violations,null,2));
-        assert.deepEqual(violations, []);
-      } finally { await context.close(); }
-    });
-
-    await test('A two-dimensional canvas failure cannot block submission or success', async () => {
-      const { page, context } = await fixture({ context: { reducedMotion: 'no-preference' } });
-      try {
-        await page.addInitScript(() => {
-          const original = HTMLCanvasElement.prototype.getContext;
-          HTMLCanvasElement.prototype.getContext = function(type, ...args) { return type === '2d' ? null : original.call(this, type, ...args); };
-        });
-        await page.goto(base); await fill(page); await page.locator('#rsvp-submit-btn').click(); await success(page);
-      } finally { await context.close(); }
+        await page.addScriptTag({path:process.env.AXE_SCRIPT});
+        await fill(page,'accept','family');
+        const violations=await page.evaluate(async()=>(await axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa']}})).violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))})));
+        if(output)await fs.writeFile(path.join(output,'accessibility.json'),JSON.stringify(violations,null,2));
+        assert.deepEqual(violations,[]);
+      } finally {await context.close();}
     });
   } finally {
     if (output) await fs.writeFile(path.join(output, 'results.json'), JSON.stringify(results, null, 2));

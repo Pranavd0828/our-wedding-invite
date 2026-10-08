@@ -2,305 +2,93 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Prajakta weds Pranav</title>
-  <meta name="description" content="You are warmly invited to join Prajakta & Pranav in celebrating their wedding at Sorina Hillside Resort this December. Explore the watercolor story and RSVP.">
-  
-  <!-- Open Graph / Facebook -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#fbfcf9">
+  <title>Prajakta &amp; Pranav | Our Forever Begins</title>
+  <meta name="description" content="Mumbai meets Pune, and our forever begins. Celebrate the wedding of Prajakta and Pranav on December 11 and 12, 2026, at Sorina Hillside Resort, Pune.">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Prajakta weds Pranav">
-  <meta property="og:description" content="You are warmly invited to join Prajakta & Pranav in celebrating their wedding at Sorina Hillside Resort this December.">
-  <meta property="og:image" content="https://pranavd0828.github.io/our-wedding-invite/assets/image-4.jpg">
+  <meta property="og:title" content="Prajakta &amp; Pranav | Our Forever Begins">
+  <meta property="og:description" content="Two cities. One forever. Join us on December 11 &amp; 12, 2026, in Pune.">
+  <meta property="og:image" content="https://pranavd0828.github.io/our-wedding-invite/assets/gemini_mumbai_pune_bg.jpg">
   <meta property="og:url" content="https://pranavd0828.github.io/our-wedding-invite/">
-
-  <!-- Fonts -->
-  
-  <!-- Favicon link (will be dynamically painted by app.js) -->
-  <link id="favicon" rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'></svg>">
-  
-  <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="index.css?v=1.7">
+  <link rel="icon" type="image/svg+xml" href="./assets/heart.svg">
+  <link rel="preload" href="./assets/cormorant-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./assets/cormorant-italic-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="index.css?v=2.1">
+  <script src="form-handler.js?v=2.1" defer></script>
+  <script src="app.js?v=2.0" defer></script>
 </head>
 <body>
-
-  <!-- Fine-Grain Paper Texture Overlay -->
-  <div class="paper-overlay" aria-hidden="true"></div>
-
-  <!-- WebGL Render Canvas (Midground Image rendering) -->
-  <canvas id="webgl-canvas" class="webgl-viewport soft-fade-mount phase-1-active" aria-hidden="true"></canvas>
-
-  <!-- DOM Fallback Images (Hidden when WebGL is initialized successfully) -->
-  <div id="fallback-images-container" class="fallback-container soft-fade-mount phase-1-active">
-    <img id="fallback-img-4" src="./assets/image-4.jpg" class="fallback-image" fetchpriority="high" alt="Prajakta & Pranav watercolor landscape with sunglasses" />
-    <img id="fallback-img-3" src="./assets/image-3.jpg" class="fallback-image image-layer-hidden" alt="Prajakta & Pranav watercolor landscape warm smile" />
-  </div>
-
-  <!-- Custom Circular Cursor Directions Badge -->
-  <div id="custom-cursor-badge" class="cursor-badge" aria-hidden="true">
-    <div class="badge-inner">
-      <svg viewBox="0 0 100 100" width="100" height="100">
-        <path id="circlePath" d="M 50, 50 m -35, 0 a 35,35 0 1,1 70,0 a 35,35 0 1,1 -70,0" fill="transparent" />
-        <text font-family="'Outfit', sans-serif" font-size="7.5" font-weight="600" fill="var(--leaf-olive)">
-          <textPath href="#circlePath" startOffset="0%">OPEN DIRECTIONS MAP &bull; OPEN DIRECTIONS MAP &bull;</textPath>
-        </text>
-      </svg>
-    </div>
-  </div>
-
-
-
-  <!-- Primary Foreground Content Container -->
-  <main id="app-scroller" class="scroller-container">
-    
-    <!-- Section 1: Welcome Screen -->
-    <section id="welcome-section" class="scroll-section">
-      <div class="section-inner grid-welcome">
-        <div class="welcome-text-col glass-panel">
-          <span class="label-pre">WEDDING INVITATION</span>
-          <h1 class="display-title">Prajakta<br><span class="ampersand">&amp;</span> Pranav</h1>
-          <p class="intro-description" style="margin-bottom: 0.5rem;">
-            We are thrilled to invite you to celebrate the beginning of our new chapter together.
-          </p>
-          <p class="intro-description" style="margin-bottom: 1rem;">
-            Come be a part of our story where Mumbai meets Pune.
-          </p>
-          
-          <div class="elegant-details">
-            <div class="detail-block">
-              <span class="detail-label">DATE</span>
-              <span class="detail-value">DEC 11 - 12, 2026</span>
-            </div>
-            <div class="detail-divider"></div>
-            <div class="detail-block">
-              <span class="detail-label">LOCATION</span>
-              <span class="detail-value">KHADAKWASLA, PUNE</span>
-            </div>
-          </div>
-
-          <div class="scroll-hint">
-            <span class="hint-text">SCROLL TO UNFOLD</span>
-            <svg class="hint-arrow" viewBox="0 0 24 24" width="16" height="16">
-              <path d="M12 5v14m-7-7 7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-        </div>
-        
-        <!-- Placeholder empty column on right for WebGL off-center column placement on desktop -->
-        <div class="welcome-empty-col" aria-hidden="true"></div>
+  <a class="skip-link" href="#main">Skip to invitation</a>
+  <header class="site-header">
+    <a class="wordmark" href="#welcome-section" aria-label="Our forever, back to the top">Our <span>forever</span></a>
+    <nav class="desktop-nav" aria-label="Invitation"><a href="#details-section">The celebrations</a><a href="#map-section">The venue</a><a class="nav-rsvp" href="#rsvp-section">RSVP <span class="icon icon-up-right" aria-hidden="true"></span></a></nav>
+    <span class="header-date">11 &amp; 12 DECEMBER 2026</span>
+  </header>
+  <main id="main">
+    <section id="welcome-section" class="hero" aria-labelledby="couple-names">
+      <picture class="hero-art" aria-hidden="true"><source media="(max-width: 600px)" srcset="./assets/mumbai-pune-mobile.webp"><img src="./assets/mumbai-pune-desktop.webp" alt="" width="1536" height="1024" fetchpriority="high"></picture>
+      <div class="hero-content">
+        <p class="eyebrow">An invitation to our wedding</p>
+        <h1 id="couple-names"><span>Prajakta</span><i>&amp;</i><span>Pranav</span></h1>
+        <p class="hero-promise">Our forever begins.</p>
+        <div class="hero-date"><span>11 &amp; 12 December 2026</span><span class="hero-date-dot" aria-hidden="true"></span><span>Pune, Maharashtra</span></div>
+        <a class="text-link hero-link" href="#details-section">You are invited <span class="icon icon-down" aria-hidden="true"></span></a>
+      </div>
+      <p class="hero-caption">Mumbai. Pune. A whole lot of love.</p>
+    </section>
+    <section class="our-story section-band" aria-labelledby="story-title">
+      <div class="story-layout content-width">
+        <div class="story-copy"><p class="eyebrow">Mumbai meets Pune</p><h2 id="story-title">Two cities.<br>One <em>forever.</em></h2><p>It started with a match on Bumble. Now, Mumbai and Pune come together for our forever.</p><p>And the best part? Having our favourite people there as we begin.</p><span class="story-signature">With love, Prajakta &amp; Pranav</span></div>
       </div>
     </section>
-
-    <!-- Section 2: Celebration Details -->
-    <section id="details-section" class="scroll-section">
-      <div class="section-inner layout-details">
-        <div class="glass-panel">
-          
-          <div class="details-heading">
-            <span class="label-pre">THE CELEBRATION</span>
-            <h2 class="display-title-sm">Our Festivities</h2>
-            <p class="details-subtitle">Join us as we write these days into our canvas.</p>
-          </div>
-
-          <div class="editorial-timeline">
-            <!-- Event 1: Sangeet -->
-            <article class="timeline-event" id="event-sangeet">
-              <header class="event-header">
-                <span class="event-date">DECEMBER 11</span>
-                <h3 class="event-title">Engagement Party and Sangeet</h3>
-              </header>
-              <div class="event-body">
-                <p class="event-time-location"><strong>4:00 PM onwards</strong> | The Grand Lawn</p>
-                <p class="event-description">An evening of music, dance, and colorful traditions. Let your hands be painted with joy as we celebrate the start of our new chapter.</p>
-              </div>
-            </article>
-
-            <!-- Event 2: Wedding -->
-            <article class="timeline-event" id="event-wedding">
-              <header class="event-header">
-                <span class="event-date">DECEMBER 12</span>
-                <h3 class="event-title">The Wedding Ceremony</h3>
-              </header>
-              <div class="event-body">
-                <p class="event-time-location"><strong>10:30 AM</strong> | The Main Mandap</p>
-                <p class="event-description">The sacred vows that bond our souls together, set against the backdrop of the hills. Join us for a traditional ceremony filled with love and blessings.</p>
-              </div>
-            </article>
-
-          </div>
-          
+    <section id="details-section" class="celebrations section-band" aria-labelledby="celebration-title">
+      <div class="content-width">
+        <div class="section-heading"><p class="eyebrow">Save us a dance</p><h2 id="celebration-title">A weekend to <em>remember.</em></h2><p>Two days of togetherness, happy tears, and a very full dance floor.</p></div>
+        <div class="event-list">
+          <article class="event" id="event-sangeet"><div class="event-date"><span>FRIDAY</span><strong>11</strong><span>DECEMBER 2026</span></div><div class="event-copy"><p class="eyebrow">Let the celebrations begin</p><h3>Engagement &amp; Sangeet</h3><p>An evening of music, dance, and all the people we love.</p><div class="event-meta"><time datetime="2026-12-11T16:00:00+05:30">4:00 PM onwards</time><span>The Grand Lawn</span></div></div><span class="event-number" aria-hidden="true">01</span></article>
+          <article class="event" id="event-wedding"><div class="event-date"><span>SATURDAY</span><strong>12</strong><span>DECEMBER 2026</span></div><div class="event-copy"><p class="eyebrow">The beginning of forever</p><h3>The Wedding Ceremony</h3><p>Sacred vows, warm blessings, and the start of our next chapter.</p><div class="event-meta"><time datetime="2026-12-12T10:30:00+05:30">10:30 AM</time><span>The Main Mandap</span></div></div><span class="event-number" aria-hidden="true">02</span></article>
         </div>
+        <p class="event-footnote">Both celebrations at Sorina Hillside Resort, Pune. All times are in India Standard Time.</p>
       </div>
     </section>
-
-    <!-- Section 3: The Spatial Map & Venue -->
-    <section id="map-section" class="scroll-section" style="position: relative;">
-      
-      <!-- Full Bleed Right Column Map (To match images) -->
-      <div class="rsvp-full-bleed-image soft-fade-mount map-canvas-container">
-        <img src="./assets/venue-new-bg.jpg" alt="Venue Background" class="venue-image-bg" />
-      </div>
-
-      <div class="section-inner layout-rsvp">
-        
-        <div class="venue-info-col glass-panel">
-          <span class="label-pre">THE VENUE</span>
-          <h2 class="display-title-sm">Sorina Hillside Resort</h2>
-          
-          <address class="venue-address" id="venue-address-link-container">
-            <a href="https://maps.app.goo.gl/zMWdZP9G282eL4YT6?g_st=iw" target="_blank" rel="noopener noreferrer" id="directions-anchor" class="address-link">
-              Gat no. 297, behind Blue Bird Factory, Zalanwadi Phata, Gorhe Khurd, Panshet Road, Khadakwasla, Pune 411042
-            </a>
-          </address>
-          <p class="address-helper">Tap the address to open Google Maps directions.</p>
-        </div>
-
+    <section id="map-section" class="venue section-band" aria-labelledby="venue-title">
+      <div class="venue-layout content-width">
+        <div class="venue-copy"><p class="eyebrow">Meet us by the hills</p><h2 id="venue-title">Sorina<br>Hillside Resort</h2><p class="venue-location">Khadakwasla, Pune</p><p>A place to come together, slow down, and celebrate with our favourite people.</p><address>Gat no. 297, behind Blue Bird Factory,<br>Zalanwadi Phata, Gorhe Khurd,<br>Panshet Road, Khadakwasla,<br>Pune 411042</address><a class="button button-outline" href="https://maps.app.goo.gl/zMWdZP9G282eL4YT6?g_st=iw" target="_blank" rel="noopener noreferrer">Get directions <span class="icon icon-up-right" aria-hidden="true"></span><span class="sr-only"> (opens Google Maps in a new tab)</span></a></div>
       </div>
     </section>
-
-    <!-- Section 4: RSVP Form -->
-    <section id="rsvp-section" class="scroll-section" style="position: relative;">
-      
-      <!-- Full Bleed Right Column Image -->
-      <div class="rsvp-full-bleed-image soft-fade-mount">
-        <img src="./assets/rsvp-image.jpg" alt="Prajakta and Pranav at the beach" width="941" height="1672" style="width: 100%; height: 100%; object-fit: cover; border-radius: 2px;">
-      </div>
-
-      <div class="section-inner layout-rsvp">
-        
-        <div class="rsvp-form-col glass-panel">
-        
-        <div class="rsvp-header">
-          <span class="label-pre">CONFIRMATION</span>
-          <h2 class="display-title-sm">Will You Celebrate With Us?</h2>
-          <p class="rsvp-subtitle">Please let us know your presence by November 1st.</p>
-        </div>
-
-        <!-- Main Interactive Card -->
-        <div class="rsvp-card-container">
-          <div class="rsvp-card" id="rsvp-interactive-card">
-            
-            <!-- Form Panel -->
-            <form id="wedding-rsvp-form" class="rsvp-form" novalidate>
-              <noscript><p>JavaScript is needed to send your RSVP. Please enable it or contact Prajakta or Pranav directly.</p></noscript>
-              
-              <!-- Honeypot Field for Spam Bots -->
-            <input type="text" name="website" id="hp-website" aria-hidden="true" tabindex="-1" autocomplete="off" style="position: absolute; left: -9999px; opacity: 0; pointer-events: none;" />
-
-            <!-- Group: Full Name -->
-            <div class="form-group">
-                <label for="guest-fullname" class="input-label">FULL NAME</label>
-                <div class="textbox-wrapper">
-                  <input type="text" id="guest-fullname" name="fullname" class="textbox-input" placeholder="e.g. PRANAV DEO" autocomplete="name" maxlength="100" aria-describedby="name-error" required>
-                  <span class="textbox-line"></span>
-                </div>
-                <span class="field-error-message" id="name-error">Please enter your name (2 to 100 characters).</span>
-              </div>
-
-              <!-- Attendance Segmented Toggle -->
-              <div class="form-group">
-                <span class="input-label" id="attendance-label">WILL YOU ATTEND?</span>
-                <div class="segmented-toggle" role="radiogroup" aria-labelledby="attendance-label" aria-describedby="attendance-error">
-                  <input type="radio" id="rsvp-accept" name="attendance" value="accept" aria-describedby="attendance-error" required>
-                  <label for="rsvp-accept" class="toggle-label">
-                    <span class="toggle-circle"></span>
-                    JOYFULLY ACCEPTS
-                  </label>
-
-                  <input type="radio" id="rsvp-decline" name="attendance" value="decline" aria-describedby="attendance-error">
-                  <label for="rsvp-decline" class="toggle-label">
-                    <span class="toggle-circle"></span>
-                    REGRETFULLY DECLINES
-                  </label>
-                </div>
-                <span class="field-error-message" id="attendance-error">Please select an attendance option.</span>
-              </div>
-
-              <!-- Secondary Expanding Fields -->
-              <div class="rsvp-expanded-fields" id="expanded-details-container" inert aria-hidden="true">
-                <div class="expanded-inner">
-                  
-                  <!-- Guest Count Segmented Toggle -->
-                  <div class="form-group">
-                    <span class="input-label" id="guest-type-label">NUMBER OF GUESTS ATTENDING</span>
-                    <div class="segmented-toggle segmented-three" role="radiogroup" aria-labelledby="guest-type-label" aria-describedby="guest-type-error">
-                      <input type="radio" id="guest-just-me" name="guest_type" value="just_me" aria-describedby="guest-type-error" disabled>
-                      <label for="guest-just-me" class="toggle-label">
-                        <span class="toggle-circle"></span>
-                        JUST ME
-                      </label>
-
-                      <input type="radio" id="guest-plus-one" name="guest_type" value="plus_one" aria-describedby="guest-type-error" disabled>
-                      <label for="guest-plus-one" class="toggle-label">
-                        <span class="toggle-circle"></span>
-                        PLUS ONE
-                      </label>
-
-                      <input type="radio" id="guest-family" name="guest_type" value="family" aria-describedby="guest-type-error" disabled>
-                      <label for="guest-family" class="toggle-label">
-                        <span class="toggle-circle"></span>
-                        FAMILY
-                      </label>
-                    </div>
-                    <span class="field-error-message" id="guest-type-error">Please select a guest option.</span>
-                  </div>
-
-                  <!-- Conditional Family Count -->
-                  <div class="form-group conditional-family hidden" id="family-count-container">
-                    <label for="family-guest-count" class="input-label">HOW MANY GUESTS TOTAL?</label>
-                    <div class="textbox-wrapper">
-                      <input type="number" id="family-guest-count" name="family_count" class="textbox-input" placeholder="e.g. 4" min="3" max="15" step="1" inputmode="numeric" aria-describedby="family-count-error" disabled>
-                      <span class="textbox-line"></span>
-                    </div>
-                    <span class="field-error-message" id="family-count-error">Please enter a whole number from 3 to 15, including yourself.</span>
-                  </div>
-
-                </div>
-              </div>
-
-              <!-- Submit Button -->
-              <button type="submit" id="rsvp-submit-btn" class="btn-submit" disabled>
-                <span class="btn-text">CONFIRM ATTENDANCE</span>
-                <span class="btn-watercolor-bleed"></span>
-              </button>
-
-            </form>
-            <p id="rsvp-status" class="submission-status hidden" role="alert" tabindex="-1"></p>
-
-            <!-- Success State Panel (Initially Hidden) -->
-            <div class="rsvp-success-panel hidden" id="rsvp-success-panel" role="region" aria-labelledby="success-title" tabindex="-1">
-              <div class="split-side split-left"></div>
-              <div class="split-side split-right"></div>
-              <div class="success-message-card">
-                <div class="success-crest">THANK YOU</div>
-                <h3 class="success-title" id="success-title">Your Presence is Woven</h3>
-                <p class="success-text" id="success-text">
-                  "Thank you for being a part of our story. We can't wait to see you at Sorina Hillside Resort this December."
-                </p>
-                <p class="success-signature">With love,<br>Prajakta & Pranav</p>
-              </div>
-            </div>
-          </div> <!-- .rsvp-card -->
-        </div> <!-- .rsvp-card-container -->
-        </div> <!-- .rsvp-form-col -->
+    <section id="rsvp-section" class="rsvp section-band" aria-labelledby="rsvp-title">
+      <div class="rsvp-layout content-width">
+        <div class="rsvp-intro"><p class="eyebrow">A seat with your name on it</p><h2 id="rsvp-title">Come for the wedding.<br>Stay for the <em>memories.</em></h2><p>It would mean the world to have you with us.</p><p class="rsvp-deadline">Kindly reply by <strong>1 November 2026.</strong></p><div class="city-note"><span>MUMBAI</span><span class="city-line" aria-hidden="true"></span><span>PUNE</span></div><p class="city-note-caption">Two cities, one celebration.</p></div>
+        <div class="rsvp-form-col"><div class="rsvp-card" id="rsvp-interactive-card">
+          <p id="rsvp-loading" class="initialization-message" role="status">Getting your RSVP ready. If the form does not load, refresh this page or contact Prajakta or Pranav.</p>
+          <noscript><p class="initialization-message">Please enable JavaScript to send your RSVP, or contact Prajakta or Pranav directly.</p></noscript>
+          <form id="wedding-rsvp-form" class="rsvp-form" novalidate>
+            <input class="honeypot" type="text" name="website" id="hp-website" aria-hidden="true" tabindex="-1" autocomplete="off">
+            <div class="form-group"><label for="guest-fullname" class="input-label">Your full name</label><div class="textbox-wrapper"><input type="text" id="guest-fullname" name="fullname" class="textbox-input" placeholder="First and last name" autocomplete="name" maxlength="100" aria-describedby="name-error" required><span class="textbox-line"></span></div><span class="field-error-message" id="name-error">Please enter your name (2 to 100 characters).</span></div>
+            <div class="form-group"><span class="input-label" id="attendance-label">Will you join us?</span><div class="segmented-toggle" role="radiogroup" aria-labelledby="attendance-label" aria-describedby="attendance-error">
+              <input type="radio" id="rsvp-accept" name="attendance" value="accept" aria-describedby="attendance-error" required><label for="rsvp-accept" class="toggle-label"><span class="toggle-circle" aria-hidden="true"></span>Joyfully accept</label>
+              <input type="radio" id="rsvp-decline" name="attendance" value="decline" aria-describedby="attendance-error"><label for="rsvp-decline" class="toggle-label"><span class="toggle-circle" aria-hidden="true"></span>Regretfully decline</label>
+            </div><span class="field-error-message" id="attendance-error">Please select an attendance option.</span></div>
+            <div class="rsvp-expanded-fields" id="expanded-details-container" inert aria-hidden="true"><div class="expanded-inner">
+              <div class="form-group"><span class="input-label" id="guest-type-label">Who is coming along?</span><div class="segmented-toggle segmented-three" role="radiogroup" aria-labelledby="guest-type-label" aria-describedby="guest-type-error">
+                <input type="radio" id="guest-just-me" name="guest_type" value="just_me" aria-describedby="guest-type-error" disabled><label for="guest-just-me" class="toggle-label"><span class="toggle-circle" aria-hidden="true"></span>Just me</label>
+                <input type="radio" id="guest-plus-one" name="guest_type" value="plus_one" aria-describedby="guest-type-error" disabled><label for="guest-plus-one" class="toggle-label"><span class="toggle-circle" aria-hidden="true"></span>Me + one</label>
+                <input type="radio" id="guest-family" name="guest_type" value="family" aria-describedby="guest-type-error" disabled><label for="guest-family" class="toggle-label"><span class="toggle-circle" aria-hidden="true"></span>Family</label>
+              </div><span class="field-error-message" id="guest-type-error">Please select a guest option.</span></div>
+              <div class="form-group conditional-family hidden" id="family-count-container"><label for="family-guest-count" class="input-label">Total guests, including you</label><div class="textbox-wrapper"><input type="number" id="family-guest-count" name="family_count" class="textbox-input" placeholder="3 to 15 guests" min="3" max="15" step="1" inputmode="numeric" aria-describedby="family-count-error" disabled><span class="textbox-line"></span></div><span class="field-error-message" id="family-count-error">Please enter a whole number from 3 to 15, including yourself.</span></div>
+            </div></div>
+            <button type="submit" id="rsvp-submit-btn" class="btn-submit button" disabled><span class="btn-text">Send my RSVP</span><span class="icon icon-up-right" aria-hidden="true"></span></button>
+            <p class="form-note">One response for you and the guests included above.</p>
+          </form>
+          <p id="rsvp-progress" class="sr-only" role="status" aria-live="polite"></p>
+          <p id="rsvp-status" class="submission-status hidden" role="alert" tabindex="-1"></p>
+          <div class="rsvp-success-panel hidden" id="rsvp-success-panel" role="region" aria-labelledby="success-title" tabindex="-1"><div class="success-message-card"><p class="eyebrow">Your RSVP is received</p><h3 class="success-title" id="success-title">See you in Pune!</h3><p class="success-text" id="success-text">Thank you for celebrating with us. We cannot wait to make these memories together.</p><p class="success-signature">With love,<br>Prajakta &amp; Pranav</p></div></div>
+        </div></div>
       </div>
     </section>
-
   </main>
-
-  <!-- External Libraries -->
-  <script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js" data-smooth-scroll async></script>
-  
-  <!-- Application Logic -->
-  <script>
-    // Initialize the agent at application startup.
-    const fpPromise = import('https://openfpcdn.io/fingerprintjs/v4')
-      .then(FingerprintJS => FingerprintJS.load())
-      .catch(() => null);
-  </script>
-  <script src="webgl-handler.js"></script>
-
-  <!-- Removed map-handler.js -->
-  <script src="form-handler.js"></script>
-  <script src="app.js"></script>
+  <footer class="site-footer"><div class="keepsake-divider" aria-hidden="true"><span class="icon icon-heart"></span></div><a class="wordmark" href="#welcome-section" aria-label="Our forever, back to the top">Our <span>forever</span></a><p>Made of little moments.<br>Ready for a lifetime.</p><span>11 &amp; 12 December 2026 &middot; Pune</span></footer>
+  <aside class="mobile-rsvp-bar" aria-label="Quick RSVP"><div><strong>Our forever begins.</strong><span>11 &amp; 12 December &middot; Pune</span></div><a class="button" href="#rsvp-section">RSVP <span class="icon icon-up-right" aria-hidden="true"></span></a></aside>
 </body>
 </html>

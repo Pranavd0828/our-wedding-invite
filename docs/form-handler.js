@@ -1,7 +1,5 @@
 /**
- * RSVP Form & State Handler - "The Landscape of Us"
- * Orchestrates letterpress initials inputs, dynamic expanding details, validation loops,
- * custom watercolor particle dissolution effects, and success card panel reveals.
+ * RSVP validation, pending-request recovery, and Google Sheets submission.
  */
 
 class FormHandler {
@@ -22,6 +20,7 @@ class FormHandler {
     // Submit btn
     this.submitBtn = document.getElementById('rsvp-submit-btn');
     this.status = document.getElementById('rsvp-status');
+    this.progress = document.getElementById('rsvp-progress');
     this.isSubmitting = false;
     this.pendingSubmission = null;
     try {
@@ -163,8 +162,9 @@ class FormHandler {
     this.form.inert = busy;
     this.form.setAttribute('aria-busy', String(busy));
     this.submitBtn.disabled = busy;
-    this.submitBtn.querySelector('.btn-text').textContent = busy ? 'SAVING...' : 'CONFIRM ATTENDANCE';
+    this.submitBtn.querySelector('.btn-text').textContent = busy ? 'Sending...' : 'Send my RSVP';
     this.submitBtn.style.opacity = busy ? '0.7' : '1';
+    if (this.progress) this.progress.textContent = busy ? 'Sending your RSVP. Please wait.' : '';
   }
 
   async getVisitorId() {
@@ -182,7 +182,12 @@ class FormHandler {
 
   submissionFor(fields) {
     const signature = JSON.stringify(fields);
-    if (this.pendingSubmission?.signature === signature && typeof this.pendingSubmission.submissionId === 'string') {
+    if (this.pendingSubmission?.signature === signature
+      && typeof this.pendingSubmission.submissionId === 'string'
+      && this.pendingSubmission.submissionId.length > 0
+      && this.pendingSubmission.submissionId.length <= 128
+      && typeof this.pendingSubmission.timestamp === 'string'
+      && Number.isFinite(Date.parse(this.pendingSubmission.timestamp))) {
       return this.pendingSubmission;
     }
     this.pendingSubmission = {
@@ -235,7 +240,7 @@ class FormHandler {
       guestType = Array.from(this.guestTypeToggles).find(r => r.checked).value;
       if (guestType === 'just_me') totalGuests = 1;
       else if (guestType === 'plus_one') totalGuests = 2;
-      else if (guestType === 'family') totalGuests = parseInt(this.familyCountInput.value, 10);
+      else if (guestType === 'family') totalGuests = Number(this.familyCountInput.value);
     }
 
     const hpInput = document.getElementById('hp-website');
@@ -278,8 +283,7 @@ class FormHandler {
         clearTimeout(timeoutId);
         try { sessionStorage.removeItem('rsvp-pending'); } catch { /* Storage is optional. */ }
         this.pendingSubmission = null;
-        // Initiate submission sequence only on success
-        this.triggerDissolutionSequence(attendanceVal);
+        this.displaySuccessPanel(attendanceVal);
       } else {
         const message = String(result?.error || result?.message || '');
         throw new Error(/^Server busy, try again\.?$/i.test(message) ? 'server-busy' : 'server-error');
@@ -302,123 +306,17 @@ class FormHandler {
     }
   }
 
-  // Captures card geometry, starts canvas droplet simulation, then displays success confirmation card
-  triggerDissolutionSequence(attendanceVal) {
-    if (this.prefersReducedMotion()) {
-      this.displaySuccessPanel(attendanceVal);
-      return;
-    }
-    // Disable inputs during transition
-    this.submitBtn.disabled = true;
-    this.submitBtn.style.opacity = '0.5';
 
-    // 1. Mobile UX: RSVP Submission Recoil (diminishing haptic pulses)
-    if (navigator.vibrate) {
-      navigator.vibrate([80, 50, 40, 30, 20]);
-    }
-
-    // 2. Play Resonant "Ink Drop" chime
-
-
-    // 3. Create watercolor particles canvas overlay
-    const rect = this.card.getBoundingClientRect();
-    const canvas = document.createElement('canvas');
-    canvas.width = rect.width;
-    canvas.height = rect.height;
-    canvas.style.position = 'absolute';
-    canvas.style.top = '0';
-    canvas.style.left = '0';
-    canvas.style.width = '100%';
-    canvas.style.height = '100%';
-    canvas.style.zIndex = '4';
-    canvas.style.pointerEvents = 'none';
-    this.card.appendChild(canvas);
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      canvas.remove();
-      this.displaySuccessPanel(attendanceVal);
-      return;
-    }
-
-    // Fade out form elements smoothly
-    this.form.classList.add('fade-out');
-
-    // Create particle array
-    const particles = [];
-    const colors = ['#4B5943', '#D29D5B', '#E1F0FA', '#FAF5EC', '#F2EDE2'];
-    
-    // Spawn particles from positions of the form components
-    const totalParticles = 120;
-    for (let i = 0; i < totalParticles; i++) {
-      particles.push({
-        x: Math.random() * rect.width,
-        y: Math.random() * rect.height * 0.8 + (rect.height * 0.1),
-        vx: Math.random() * 2 - 1.0,
-        vy: -Math.random() * 1.5 - 0.5,
-        radius: Math.random() * 8 + 3,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        alpha: 1.0,
-        decay: Math.random() * 0.015 + 0.008,
-        wiggleSpeed: Math.random() * 0.02 + 0.01,
-        wiggleAmp: Math.random() * 0.8 + 0.2
-      });
-    }
-
-    let startTime = performance.now();
-
-    const animateParticles = (now) => {
-      const elapsed = now - startTime;
-      ctx.clearRect(0, 0, rect.width, rect.height);
-
-      let activeCount = 0;
-      particles.forEach(p => {
-        if (p.alpha > 0) {
-          activeCount++;
-          
-          // Apply physics
-          p.y += p.vy;
-          p.x += p.vx + Math.sin(elapsed * p.wiggleSpeed) * p.wiggleAmp;
-          p.alpha -= p.decay;
-          
-          if (p.alpha < 0) p.alpha = 0;
-
-          // Draw droplet with soft wet watercolor edge
-          ctx.beginPath();
-          const grad = ctx.createRadialGradient(p.x, p.y, p.radius * 0.1, p.x, p.y, p.radius);
-          grad.addColorStop(0, p.color);
-          grad.addColorStop(0.6, p.color);
-          grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-          
-          ctx.fillStyle = grad;
-          ctx.globalAlpha = p.alpha;
-          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-          ctx.closePath();
-          ctx.fill();
-        }
-      });
-
-      if (activeCount > 0) {
-        requestAnimationFrame(animateParticles);
-      } else {
-        // Particles dissolved: clean up canvas and trigger panel split
-        canvas.remove();
-        this.displaySuccessPanel(attendanceVal);
-      }
-    };
-
-    requestAnimationFrame(animateParticles);
-  }
-
-  // Split panels open and reveal success confirmation card
+  // Confirm immediately after the server acknowledges the request.
   displaySuccessPanel(attendanceVal) {
+    if (this.progress) this.progress.textContent = '';
     // Customize text based on attendance
     if (attendanceVal === 'decline') {
       const title = document.getElementById('success-title');
       const text = document.getElementById('success-text');
       if (title && text) {
-        title.innerText = "We Will Miss You";
-        text.innerText = `"Thank you for letting us know. We appreciate your warm wishes from afar."`;
+        title.textContent = 'We will miss you';
+        text.textContent = 'Thank you for letting us know. We appreciate your warm wishes from afar.';
       }
     }
 
@@ -426,12 +324,9 @@ class FormHandler {
     this.form.setAttribute('aria-busy', 'false');
     this.successPanel.classList.remove('hidden');
     this.successPanel.focus({ preventScroll: true });
-    this.successPanel.scrollIntoView({ behavior: this.prefersReducedMotion() ? 'auto' : 'smooth', block: 'center' });
+    this.successPanel.scrollIntoView({ behavior: this.prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
     
-    // Small delay to trigger DOM layout reflow
-    setTimeout(() => {
-      this.successPanel.classList.add('panel-active');
-    }, 50);
+    this.successPanel.classList.add('panel-active');
   }
 }
 
