@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const { createServer } = require('node:http');
+const { pathToFileURL } = require('node:url');
 const { chromium, webkit } = require('playwright');
 
 const root = path.resolve(__dirname, '../docs');
@@ -56,6 +57,7 @@ const server = createServer(async (req, res) => {
         return route.fulfill({ contentType: 'text/javascript', body });
       }
       if (url.origin === base) return route.continue();
+      if (url.protocol === 'file:') return route.continue();
       if (options.realLenis && url.hostname === 'unpkg.com') return route.continue();
       return route.abort();
     });
@@ -269,6 +271,12 @@ const server = createServer(async (req, res) => {
             assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
           }
           await page.waitForFunction(() => [...document.images].every(image => image.complete && image.naturalWidth > 0));
+          const artwork = await page.locator('.hero-art img').evaluate(image => ({
+            fit: getComputedStyle(image).objectFit,
+            width: image.getBoundingClientRect().width
+          }));
+          assert.equal(artwork.fit, width > 760 ? 'cover' : 'fill');
+          if (width > 760) assert.ok(artwork.width <= 1600, 'Desktop artwork must not grow without a width limit');
           assert.equal(await page.locator('canvas').count(), 0, 'There must be no cross-fading canvas backgrounds');
           await fill(page, 'accept', 'family');
           const clipped = await page.locator('#rsvp-section').evaluate(e => [...e.querySelectorAll('h2,.toggle-label,.btn-submit')].filter(el => el.scrollWidth > el.clientWidth + 1).map(el => el.textContent.trim()));
@@ -283,6 +291,61 @@ const server = createServer(async (req, res) => {
             await page.screenshot({path:path.join(output,`full-${width}.png`),fullPage:true});
           }
         } finally { await context.close(); }
+      });
+    }
+
+    for (const mode of ['http', 'file']) {
+      await test(`Action labels stay centered in ${mode} preview and enlarged text`, async () => {
+        for (const width of [320, 390, 768, 1050, 1051, 1440, 2560]) {
+          const {page, context} = await fixture({context:{viewport:{width,height:900},isMobile:width<800}});
+          const url = mode === 'file' ? pathToFileURL(path.join(root, 'index.html')).href : base;
+          const check = async () => {
+            const title = await page.locator('#couple-names').evaluate(element => {
+              const textBounds = node => {
+                const range = document.createRange();
+                range.selectNodeContents(node);
+                return range.getBoundingClientRect();
+              };
+              const first = textBounds(element.firstElementChild);
+              const last = textBounds(element.lastElementChild);
+              const ampersand = element.querySelector('i').getBoundingClientRect();
+              return {
+                centerOffset: Math.abs((ampersand.left + ampersand.right) / 2 - innerWidth / 2),
+                overlaps: innerWidth > 760
+                  ? first.right > ampersand.left || last.left < ampersand.right
+                  : first.bottom > ampersand.top || last.top < ampersand.bottom
+              };
+            });
+            assert.ok(title.centerOffset < 1, `${mode}, ${width}px: ampersand must be centered`);
+            assert.equal(title.overlaps, false, `${mode}, ${width}px: names must not overlap the ampersand`);
+            const failures = await page.evaluate(() => [...document.querySelectorAll('.control-label')].flatMap(label => {
+              const control = label.closest('a,button');
+              if (!control.getClientRects().length) return [];
+              const content = label.closest('.control-content') || label;
+              const outer = control.getBoundingClientRect(), inner = content.getBoundingClientRect();
+              const offset = Math.abs((outer.left + outer.right - inner.left - inner.right) / 2);
+              return offset > 1 || label.scrollWidth > label.clientWidth + 1 || control.scrollWidth > control.clientWidth + 1
+                ? [{label:label.textContent,offset}] : [];
+            }));
+            assert.deepEqual(failures, [], `${mode}, ${width}px: labels must be centered without clipping`);
+          };
+          try {
+            await page.goto(url);
+            await page.evaluate(() => document.fonts.ready);
+            const arrow = page.locator('.hero-link .control-arrow');
+            assert.equal(await arrow.getAttribute('aria-hidden'), 'true');
+            assert.equal(await arrow.locator('path').count(), 2, 'The arrow must render without an external mask request');
+            await check();
+            await page.addStyleTag({content:'html { font-size: 200%; }'});
+            await check();
+            await page.evaluate(() => window.AppInstance.form.setBusy(true));
+            await check();
+            await page.evaluate(() => window.AppInstance.form.setBusy(false));
+            await page.addStyleTag({content:'.icon { mask-image: none; -webkit-mask-image: none; background: none; }'});
+            await check();
+            assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
+          } finally { await context.close(); }
+        }
       });
     }
 
