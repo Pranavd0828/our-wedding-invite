@@ -91,6 +91,54 @@ const server = createServer(async (req, res) => {
     assert.equal(clipped, false, 'Confirmation must fit inside its container');
   }
 
+  async function headingInk(page) {
+    const screenshot = await page.locator('#couple-names').screenshot({
+      scale: 'css',
+      style: '#couple-names { background: white; } .site-header, .mobile-rsvp-bar { visibility: hidden; }'
+    });
+    return page.evaluate(async data => {
+      const image = new Image();
+      image.src = data;
+      await image.decode();
+      const canvas = document.createElement('canvas');
+      canvas.width = image.width;
+      canvas.height = image.height;
+      const context = canvas.getContext('2d');
+      context.drawImage(image, 0, 0);
+      const pixels = context.getImageData(0, 0, image.width, image.height).data;
+      const names = [], separator = [];
+      for (let y = 0; y < image.height; y++) for (let x = 0; x < image.width; x++) {
+        const index = (y * image.width + x) * 4;
+        const near = (r, g, b) => Math.abs(pixels[index] - r) + Math.abs(pixels[index + 1] - g) + Math.abs(pixels[index + 2] - b) < 45;
+        if (near(33, 63, 53)) names.push([x, y]);
+        else if (near(153, 76, 96)) separator.push([x, y]);
+      }
+      const bounds = points => points.reduce((box, [x, y]) => ({
+        left: Math.min(box.left, x), right: Math.max(box.right, x),
+        top: Math.min(box.top, y), bottom: Math.max(box.bottom, y)
+      }), {left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity});
+      const ampersand = bounds(separator);
+      const first = bounds(names.filter(point => point[1] < ampersand.top));
+      const last = bounds(names.filter(point => point[1] > ampersand.bottom));
+      const all = bounds([...names, ...separator]);
+      const centerError = box => Math.abs((box.left + box.right + 1) / 2 - image.width / 2);
+      const namesWrap = [...document.querySelectorAll('#couple-names > span')].some(name => {
+        const range = document.createRange();
+        range.selectNodeContents(name);
+        return range.getClientRects().length > 1;
+      });
+      return {
+        visible: names.length > 0 && separator.length > 0,
+        namesWrap,
+        groupCenterError: centerError(all),
+        lineCenterErrors: [first, ampersand, last].map(centerError),
+        gapAbove: ampersand.top - first.bottom - 1,
+        gapBelow: last.top - ampersand.bottom - 1,
+        fontSize: parseFloat(getComputedStyle(document.querySelector('#couple-names')).fontSize)
+      };
+    }, 'data:image/png;base64,' + screenshot.toString('base64'));
+  }
+
   try {
     await test('Accept / Decline / Accept and family changes remain usable', async () => {
       const { page, context } = await fixture();
@@ -310,19 +358,16 @@ const server = createServer(async (req, res) => {
               const last = textBounds(element.lastElementChild);
               const ampersand = element.querySelector('i').getBoundingClientRect();
               return {
-                centerOffset: Math.abs((ampersand.left + ampersand.right) / 2 - innerWidth / 2),
-                overlaps: innerWidth > 760
-                  ? first.right > ampersand.left || last.left < ampersand.right
-                  : first.bottom > ampersand.top || last.top < ampersand.bottom
+                centerOffset: Math.abs((element.getBoundingClientRect().left + element.getBoundingClientRect().right) / 2 - innerWidth / 2),
+                overlaps: innerWidth > 760 && (first.right > ampersand.left || last.left < ampersand.right)
               };
             });
-            assert.ok(title.centerOffset < 1, `${mode}, ${width}px: ampersand must be centered`);
+            assert.ok(title.centerOffset < 1, `${mode}, ${width}px: the complete heading must be centered`);
             assert.equal(title.overlaps, false, `${mode}, ${width}px: names must not overlap the ampersand`);
             const failures = await page.evaluate(() => [...document.querySelectorAll('.control-label')].flatMap(label => {
               const control = label.closest('a,button');
               if (!control.getClientRects().length) return [];
-              const content = label.closest('.control-content') || label;
-              const outer = control.getBoundingClientRect(), inner = content.getBoundingClientRect();
+              const outer = control.getBoundingClientRect(), inner = label.getBoundingClientRect();
               const offset = Math.abs((outer.left + outer.right - inner.left - inner.right) / 2);
               return offset > 1 || label.scrollWidth > label.clientWidth + 1 || control.scrollWidth > control.clientWidth + 1
                 ? [{label:label.textContent,offset}] : [];
@@ -332,9 +377,7 @@ const server = createServer(async (req, res) => {
           try {
             await page.goto(url);
             await page.evaluate(() => document.fonts.ready);
-            const arrow = page.locator('.hero-link .control-arrow');
-            assert.equal(await arrow.getAttribute('aria-hidden'), 'true');
-            assert.equal(await arrow.locator('path').count(), 2, 'The arrow must render without an external mask request');
+            assert.equal(await page.locator('.hero-link svg,.hero-link .icon').count(), 0);
             await check();
             await page.addStyleTag({content:'html { font-size: 200%; }'});
             await check();
@@ -348,6 +391,30 @@ const server = createServer(async (req, res) => {
         }
       });
     }
+
+    await test('Visible heading pixels are centered with balanced mobile spacing', async () => {
+      for (const [width, height] of [[320,568],[390,844],[440,900],[760,900],[761,900],[1050,900],[1051,900],[1440,900],[2560,1440]]) {
+        const {page, context} = await fixture({context:{viewport:{width,height},isMobile:width<=760}});
+        try {
+          await page.goto(base);
+          await page.evaluate(() => document.fonts.ready);
+          for (const scale of [100, 200]) {
+            await page.addStyleTag({content:`html { font-size: ${scale}%; }`});
+            const ink = await headingInk(page);
+            const tolerance = Math.max(4, ink.fontSize * .08);
+            const label = `${width}px at ${scale}% text`;
+            assert.ok(ink.visible, `${label}: heading ink must be visible`);
+            assert.ok(ink.groupCenterError <= tolerance, `${label}: complete visible title must be centered (${ink.groupCenterError}px)`);
+            if (width <= 760) {
+              assert.ok(ink.lineCenterErrors.every(error => error <= tolerance), `${label}: each visible line must be centered`);
+              assert.ok(ink.gapAbove >= 0 && ink.gapBelow >= 0, `${label}: visible letters must not overlap`);
+              // Wrapped names change which letters sit beside the separator.
+              if (!ink.namesWrap) assert.ok(Math.abs(ink.gapAbove - ink.gapBelow) <= tolerance, `${label}: visible gaps differ (${ink.gapAbove}px and ${ink.gapBelow}px)`);
+            }
+          }
+        } finally { await context.close(); }
+      }
+    });
 
     await test('Mobile RSVP bar reaches the form and clears typing fields', async () => {
       const {page, context} = await fixture();
@@ -436,6 +503,23 @@ const server = createServer(async (req, res) => {
         await success(page);
         assert.deepEqual(errors,[]);
       } finally {await context.close();}
+    });
+
+    await test('Fallback fonts retain readable headings and usable controls', async () => {
+      for (const width of [320,390,760,761,1051,1440]) {
+        const {page,context,errors} = await fixture({context:{viewport:{width,height:900},isMobile:width<=760}});
+        try {
+          await page.route('**/*.woff2', route => route.abort());
+          await page.goto(base);
+          await page.evaluate(() => document.fonts.ready);
+          const ink = await headingInk(page);
+          assert.ok(ink.visible, `${width}px: fallback heading must be visible`);
+          assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
+          assert.equal(await page.locator('#rsvp-submit-btn').isEnabled(), true);
+          assert.deepEqual(errors, []);
+          if (output) await page.screenshot({path:path.join(output,`fallback-font-${width}.png`)});
+        } finally {await context.close();}
+      }
     });
 
     await test('The invitation has no third-party animation dependency', async () => {

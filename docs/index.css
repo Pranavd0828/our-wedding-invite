@@ -59,8 +59,6 @@ section { scroll-margin-top: 16px; }
 .button-outline:hover { color: white; }
 .button:disabled { cursor: wait; opacity: .6; }
 .control-label { min-width: 0; text-align: center; overflow-wrap: anywhere; }
-.control-content { display: inline-flex; align-items: center; justify-content: center; gap: 16px; min-width: 0; }
-.control-arrow { width: 20px; height: 20px; flex: 0 0 20px; }
 .text-link { position: relative; isolation: isolate; display: inline-flex; justify-content: center; align-items: center; max-width: 100%; min-height: 44px; padding: 8px 0; font-size: 0.8125rem; font-weight: 600; text-decoration: none; border-bottom: 1px solid transparent; }
 .text-link::before { content: ''; position: absolute; inset: 0; z-index: -1; background: rgba(251,252,249,.95); box-shadow: 0 0 8px 6px rgba(251,252,249,.95); filter: blur(10px); pointer-events: none; }
 .text-link::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--ink); pointer-events: none; }
@@ -85,15 +83,13 @@ section { scroll-margin-top: 16px; }
 .hero-content { width: 100%; min-width: 0; padding: 68px 24px 205px; }
 .hero .eyebrow { color: var(--ink); margin-bottom: 28px; display: flex; align-items: center; justify-content: center; gap: 14px; }
 .hero .eyebrow::before, .hero .eyebrow::after { content: ''; width: 32px; height: 1px; background: #b9a285; flex-shrink: 0; }
-.hero h1 { position: relative; width: min(100%, 1220px); margin-inline: auto; display: flex; align-items: center; font-size: 7rem; }
-.hero h1 span { width: 50%; min-width: 0; max-width: 50%; }
-.hero h1 span:first-child { padding-right: .5em; text-align: right; }
-.hero h1 span:last-child { padding-left: .5em; text-align: left; }
-.hero h1 i { position: absolute; left: 50%; transform: translateX(-50%); font-size: 3.625rem; color: var(--rose); font-weight: 500; font-style: normal; }
+.hero h1 { width: fit-content; max-width: 100%; margin-inline: auto; display: flex; justify-content: center; align-items: center; gap: .25em; font-size: 7rem; }
+.hero h1 span { min-width: 0; max-width: 100%; }
+.hero h1 i { flex: 0 0 auto; font-size: 3.625rem; color: var(--rose); font-weight: 500; font-style: normal; }
 .hero-promise { font-family: var(--serif); font-size: 1.875rem; font-style: italic; color: var(--rose); margin-top: 14px; }
 .hero-date { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 16px; width: fit-content; max-width: 100%; margin: 28px auto 0; padding: 8px 16px; font-size: 0.8125rem; background: rgba(251,252,249,.78); border-radius: 3px; -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
 .hero-date-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--rose); }
-.hero-link { margin-top: 24px; }
+.hero-link { margin-top: 24px; min-width: 130px; }
 .our-story { background: var(--sage); padding-top: 32px; }
 .story-layout { text-align: center; }
 .story-copy { max-width: 620px; margin-inline: auto; }
@@ -189,11 +185,9 @@ figcaption { font-size: 0.6875rem; color: var(--muted); margin-top: 14px; text-a
   h3 { font-size: 1.6875rem; }
   .hero { min-height: min(760px, calc(100svh - 210px)); }
   .hero-content { padding-top: 45px; padding-bottom: 190px; }
-  .hero h1 { width: 100%; display: flex; flex-direction: column; gap: 0; font-size: 4.5rem; }
-  .hero h1 span { width: auto; max-width: 100%; }
-  .hero h1 span:first-child, .hero h1 span:last-child { padding-inline: 0; }
-  .hero h1 span:first-child, .hero h1 span:last-child { text-align: center; }
-  .hero h1 i { position: static; transform: none; font-size: 2.125rem; line-height: 1.05; margin-block: .25rem; }
+  .hero h1 { flex-direction: column; gap: 0; font-size: 4.5rem; }
+  /* Balance the visible gaps around the descender in Prajakta. */
+  .hero h1 i { transform: translateY(.28em); font-size: 2.125rem; line-height: 1.05; margin-block: .25rem; }
   .hero .eyebrow { font-size: 0.625rem; margin-bottom: 20px; }
   .hero .eyebrow::before, .hero .eyebrow::after { width: 18px; }
   .hero-promise { font-size: 1.6875rem; margin-top: 16px; }
