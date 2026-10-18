@@ -308,7 +308,7 @@ const server = createServer(async (req, res) => {
       });
     }
 
-    for (const [width, height] of [[320,568], [390,844], [430,932], [480,800], [768,1024], [844,390], [1024,768], [1440,900], [2560,1440]]) {
+    for (const [width, height] of [[320,568], [390,844], [430,932], [480,800], [600,900], [601,900], [700,900], [760,900], [761,900], [768,1024], [844,390], [1024,768], [1440,900], [2560,1440]]) {
       await test(`Invitation layout, images and controls at ${width}x${height}`, async () => {
         const { page, context, errors } = await fixture({ context: { viewport: { width, height }, reducedMotion: 'no-preference', isMobile: width <= 1024 } });
         try {
@@ -321,9 +321,11 @@ const server = createServer(async (req, res) => {
           await page.waitForFunction(() => [...document.images].every(image => image.complete && image.naturalWidth > 0));
           const artwork = await page.locator('.hero-art img').evaluate(image => ({
             fit: getComputedStyle(image).objectFit,
-            width: image.getBoundingClientRect().width
+            width: image.getBoundingClientRect().width,
+            source: image.currentSrc
           }));
-          assert.equal(artwork.fit, width > 760 ? 'cover' : 'fill');
+          assert.equal(artwork.fit, 'cover', 'Artwork must preserve its original proportions');
+          assert.ok(artwork.source.endsWith(width <= 760 ? 'mumbai-pune-mobile.webp' : 'mumbai-pune-desktop.webp'));
           if (width > 760) assert.ok(artwork.width <= 1600, 'Desktop artwork must not grow without a width limit');
           assert.equal(await page.locator('canvas').count(), 0, 'There must be no cross-fading canvas backgrounds');
           await fill(page, 'accept', 'family');
@@ -404,6 +406,7 @@ const server = createServer(async (req, res) => {
             const tolerance = Math.max(4, ink.fontSize * .08);
             const label = `${width}px at ${scale}% text`;
             assert.ok(ink.visible, `${label}: heading ink must be visible`);
+            assert.equal(ink.namesWrap, false, `${label}: names must stay intact`);
             assert.ok(ink.groupCenterError <= tolerance, `${label}: complete visible title must be centered (${ink.groupCenterError}px)`);
             if (width <= 760) {
               assert.ok(ink.lineCenterErrors.every(error => error <= tolerance), `${label}: each visible line must be centered`);
@@ -411,6 +414,46 @@ const server = createServer(async (req, res) => {
               // Wrapped names change which letters sit beside the separator.
               if (!ink.namesWrap) assert.ok(Math.abs(ink.gapAbove - ink.gapBelow) <= tolerance, `${label}: visible gaps differ (${ink.gapAbove}px and ${ink.gapBelow}px)`);
             }
+          }
+        } finally { await context.close(); }
+      }
+    });
+
+    await test('Enlarged text preserves event spacing and the complete RSVP label', async () => {
+      for (const width of [320, 390, 600, 601, 760]) {
+        const {page, context} = await fixture({context:{viewport:{width,height:844}}});
+        try {
+          await page.goto(base);
+          await page.evaluate(() => document.fonts.ready);
+          await page.addStyleTag({content:'html { font-size: 200%; }'});
+          await page.waitForFunction(() => [...document.querySelectorAll('#couple-names > span')].every(element => {
+            const range = document.createRange();
+            range.selectNodeContents(element);
+            return range.getClientRects().length === 1;
+          }));
+          const measurements = await page.evaluate(() => {
+            const rects = element => {
+              const range = document.createRange();
+              range.selectNodeContents(element);
+              return [...range.getClientRects()];
+            };
+            return {
+              events: [...document.querySelectorAll('.event')].map(event => ({
+                dateRight: Math.max(...[...event.querySelector('.event-date').children].flatMap(element => rects(element).map(rect => rect.right))),
+                copyLeft: event.querySelector('.event-copy').getBoundingClientRect().left,
+                dateBottom: event.querySelector('.event-date').getBoundingClientRect().bottom,
+                copyTop: event.querySelector('.event-copy').getBoundingClientRect().top
+              })),
+              labelLines: rects(document.querySelector('.mobile-rsvp-bar .control-label')).length,
+              overflow: document.documentElement.scrollWidth > innerWidth + 1
+            };
+          });
+          assert.equal(measurements.overflow, false, `${width}px must not scroll horizontally`);
+          assert.equal(measurements.labelLines, 1, `${width}px RSVP label must stay on one line`);
+          for (const event of measurements.events) assert.ok(event.copyLeft - event.dateRight >= 19 || event.copyTop - event.dateBottom >= 19, `${width}px event dates need clear space beside or above the copy`);
+          if (output) {
+            await page.screenshot({path:path.join(output, `large-text-hero-${width}.png`)});
+            await page.locator('#event-sangeet').screenshot({path:path.join(output, `large-text-event-${width}.png`)});
           }
         } finally { await context.close(); }
       }
@@ -512,8 +555,12 @@ const server = createServer(async (req, res) => {
           await page.route('**/*.woff2', route => route.abort());
           await page.goto(base);
           await page.evaluate(() => document.fonts.ready);
-          const ink = await headingInk(page);
-          assert.ok(ink.visible, `${width}px: fallback heading must be visible`);
+          for (const scale of [100, 200, 100]) {
+            await page.addStyleTag({content:`html { font-size: ${scale}%; }`});
+            const ink = await headingInk(page);
+            assert.ok(ink.visible, `${width}px: fallback heading must be visible`);
+            assert.equal(ink.namesWrap, false, `${width}px at ${scale}%: fallback names must stay intact`);
+          }
           assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
           assert.equal(await page.locator('#rsvp-submit-btn').isEnabled(), true);
           assert.deepEqual(errors, []);

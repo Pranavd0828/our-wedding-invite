@@ -27,6 +27,34 @@
   window.visualViewport?.addEventListener('resize', updateKeyboardState);
   window.addEventListener('pageshow', updateKeyboardState);
 
+  // Fit complete names only when enlarged text or fallback fonts exceed the space.
+  const title = document.getElementById('couple-names');
+  const titleContainer = title.parentElement;
+  const measure = document.createElement('canvas').getContext('2d');
+  const fitNames = () => {
+    if (!measure) return;
+    title.style.setProperty('--name-fit', '1');
+    const style = getComputedStyle(title);
+    const containerStyle = getComputedStyle(titleContainer);
+    const available = titleContainer.clientWidth - parseFloat(containerStyle.paddingLeft) - parseFloat(containerStyle.paddingRight);
+    const widths = [...title.children].map(element => {
+      const textStyle = getComputedStyle(element);
+      measure.font = `${textStyle.fontStyle} ${textStyle.fontWeight} ${textStyle.fontSize} ${textStyle.fontFamily}`;
+      return measure.measureText(element.textContent).width;
+    });
+    const needed = style.flexDirection === 'column'
+      ? Math.max(...widths)
+      : widths.reduce((sum, width) => sum + width, 0) + 2 * parseFloat(style.columnGap);
+    title.style.setProperty('--name-fit', String(Math.min(1, Math.max(1, available - 2) / needed)));
+  };
+  fitNames();
+  document.fonts.ready.then(fitNames);
+  window.addEventListener('resize', fitNames);
+  if (typeof ResizeObserver === 'function') {
+    const titleObserver = new ResizeObserver(fitNames);
+    titleObserver.observe(titleContainer);
+  }
+
   // Larger text can increase either fixed bar; measure actual space for anchor scrolling.
   const header = document.querySelector('.site-header');
   const bar = document.querySelector('.mobile-rsvp-bar');
